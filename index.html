@@ -60,8 +60,6 @@
   table.t th, table.t td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; vertical-align: top; }
   table.t th { background: var(--head); }
   table.t td.r { text-align: right; font-family: ui-monospace, Menlo, monospace; }
-  table.je select { min-width: 220px; }
-  table.je input { width: 130px; font: 700 .95rem ui-monospace, Menlo, monospace; padding: 5px 8px; border: 2px solid var(--input-ink); border-radius: 6px; background: var(--input); color: var(--input-ink); }
   pre.code { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 0; font: .82rem/1.55 ui-monospace, Menlo, monospace; overflow-x: auto; margin: 8px 0; }
   pre.code .ln { display: inline-block; width: 3.2em; text-align: right; padding-right: .9em; color: var(--muted); user-select: none; }
   pre.code .cm { color: var(--good); }
@@ -541,22 +539,14 @@ function makeParams() {
   p.U = between("s4.u", 5, 20, 1) * 1e8;
   p.L1 = between("s4.l1", 60, 90, 1);
   p.L2 = r2(p.L1 * between("s4.l2", 0.30, 0.60, 0.01));
-  // Section 5
-  p.B5 = Math.ceil(p.A / 10000) * 10000 + 10000;
-  p.F5 = between("s5.f", 20, 60, 5);
-  p.R5 = between("s5.r", 10, 50, 1) * 1000;
-  p.Hs = between("s5.hs", 2, 20, 1) * 10000;
-  p.p5 = between("s5.p", 0.900, 0.980, 0.001);
   p.code = hashHex(SEED).slice(0, 8).toUpperCase();
   return p;
 }
 
 /* ---------------- the questions ---------------- */
-const ACCOUNTS = ["Cash – bank account", "Stablecoin holdings (USDC)", "Crypto assets – network token", "Accounts payable", "Accounts receivable",
-  "Bank fees expense", "Purchase discounts", "Salaries expense", "Payroll tax withholding payable", "Realized loss on stablecoins", "Interest income", "Revenue"];
 const SECNAMES = { 1: "1. Know your stablecoins", 2: "2. Design your own", 3: "3. Pay with it", 4: "4. Stress test", 5: "5. Your call" };
 
-// kinds: num (number, checked), mc (multiple choice, checked), je (journal entry, checked), sel (design choice + why, not checked), text (written, not checked)
+// kinds: num (number, checked), mc (multiple choice, checked), sel (design choice + why, not checked), text (written, not checked)
 const Q = [];
 const add = (q) => Q.push(q);
 
@@ -772,7 +762,7 @@ add({ id: "5.1", sec: "5", kind: "text", label: "Written: CFO recommendation",
 
 const QBYID = Object.fromEntries(Q.map(q => [q.id, q]));
 { const cnt = {}; for (const q of Q) { const k = q.sec[0]; cnt[k] = (cnt[k] || 0) + 1; q.n = k + "." + cnt[k]; } }   // numbers shown to students run 1.1, 1.2, ... with no gaps
-const CHECKED = Q.filter(q => ["num", "mc", "je"].includes(q.kind));
+const CHECKED = Q.filter(q => ["num", "mc"].includes(q.kind));
 
 /* ---------------- the contract shown in 2E (its order is shuffled per student) ---------------- */
 let CODE = { lines: [], lineMint: 0, lineFrozen: 0 };
@@ -850,23 +840,10 @@ function parseNum(s) {
   if (t === "" || !/^-?\d*\.?\d+$/.test(t)) return NaN;
   return parseFloat(t);
 }
-function jeCheck(q, rows) {    // rows: [{a, dr, cr}] strings
-  const want = q.lines(P).map(l => ({ a: l.a, dr: r2(l.dr || 0), cr: r2(l.cr || 0) }));
-  const got = (rows || []).filter(r => r && (r.a || r.dr || r.cr)).map(r => ({ a: r.a || "", dr: r2(parseNum(r.dr) || 0), cr: r2(parseNum(r.cr) || 0) }));
-  if (got.length !== want.length) return false;
-  const used = new Set();
-  for (const w of want) {
-    const i = got.findIndex((g, k) => !used.has(k) && g.a === w.a && Math.abs(g.dr - w.dr) < 0.015 && Math.abs(g.cr - w.cr) < 0.015);
-    if (i < 0) return false;
-    used.add(i);
-  }
-  return true;
-}
 function isRight(q, v = S.ans[q.id]) {
   if (v === undefined || v === "" || v === null) return null;
   if (q.kind === "num") { const n = parseNum(v); if (isNaN(n)) return false; return Math.abs(n - q.ans(P)) <= q.tol(P) + 1e-9; }
   if (q.kind === "mc") return +v === correctMC(q);
-  if (q.kind === "je") { const rows = v; if (!rows.some(r => r && (r.a || r.dr || r.cr))) return null; return jeCheck(q, rows); }
   return null;
 }
 const words = s => (String(s || "").trim().match(/\S+/g) || []).length;
@@ -900,12 +877,6 @@ function renderQ(q) {
       <textarea class="why-in" maxlength="1500" style="min-height:70px" placeholder="Explain your reasoning." aria-label="Why, for ${escHtml(q.label)}"></textarea>`;
   } else if (q.kind === "text") {
     h += `<textarea maxlength="6000" placeholder="Your answer" aria-label="Your answer to ${q.n}"></textarea>`;
-  } else if (q.kind === "je") {
-    const n = q.lines(P).length;
-    h += `<p class="small muted" style="margin:0 0 4px">This entry has ${n} lines.</p><div class="scroll"><table class="t je"><tr><th>Account</th><th>Debit ($)</th><th>Credit ($)</th></tr>` +
-      Array.from({ length: n }, (_, i) => `<tr data-row="${i}"><td><select aria-label="Line ${i + 1} account"><option value="">Choose an account…</option>${ACCOUNTS.map(a => `<option>${escHtml(a)}</option>`).join("")}</select></td>
-        <td><input class="dr" inputmode="decimal" autocomplete="off" aria-label="Line ${i + 1} debit"></td><td><input class="cr" inputmode="decimal" autocomplete="off" aria-label="Line ${i + 1} credit"></td></tr>`).join("") +
-      `<tr><td class="muted">Totals</td><td class="r tdr"></td><td class="r tcr"></td></tr></table></div><div class="res"></div>`;
   }
   if (q.hint) h += `<div class="hint">Hint: ${q.hint}</div>`;
   d.innerHTML = h;
@@ -934,36 +905,22 @@ function wireQ(q, d) {
     const ta = d.querySelector("textarea");
     if (v !== undefined) ta.value = v;
     ta.addEventListener("input", () => { S.ans[q.id] = ta.value; dirty = true; refreshQ(q); refreshProgress(); });
-  } else if (q.kind === "je") {
-    const rows = [...d.querySelectorAll("tr[data-row]")];
-    const read = () => rows.map(tr => ({ a: tr.querySelector("select").value, dr: tr.querySelector(".dr").value, cr: tr.querySelector(".cr").value }));
-    if (Array.isArray(v)) rows.forEach((tr, i) => { const r = v[i] || {}; tr.querySelector("select").value = r.a || ""; tr.querySelector(".dr").value = r.dr || ""; tr.querySelector(".cr").value = r.cr || ""; });
-    rows.forEach(tr => tr.querySelectorAll("select,input").forEach(el => {
-      el.addEventListener("input", () => { S.ans[q.id] = read(); dirty = true; refreshQ(q, true); refreshProgress(); });
-      el.addEventListener("change", () => { S.ans[q.id] = read(); const all = read().every(r => r.a && (r.dr || r.cr)); if (all) countTry(q, JSON.stringify(read())); refreshQ(q); refreshProgress(); });
-    }));
   }
 }
 function countTry(q, val) {
   if (val === "" || val === undefined) return;
-  const ok = isRight(q, q.kind === "je" ? JSON.parse(val) : val);
+  const ok = isRight(q, val);
   if (ok === false && S.lastWrong[q.id] !== val) { S.tries[q.id] = (S.tries[q.id] || 0) + 1; S.lastWrong[q.id] = val; dirty = true; }
 }
-function refreshQ(q, typing = false) {
+function refreshQ(q) {
   const d = document.querySelector(`.q[data-q="${CSS.escape(q.id)}"]`);
   if (!d) return;
   const res = d.querySelector(".res"), hint = d.querySelector(".hint"), t = S.tries[q.id] || 0;
   if (q.kind === "text" || q.kind === "sel") return;
-  if (q.kind === "je") {
-    const rows = S.ans[q.id] || [];
-    const sd = rows.reduce((a, r) => a + (parseNum(r.dr) || 0), 0), sc = rows.reduce((a, r) => a + (parseNum(r.cr) || 0), 0);
-    d.querySelector(".tdr").textContent = fmt(sd, 2); d.querySelector(".tcr").textContent = fmt(sc, 2);
-  }
   const ok = isRight(q);
   let msg = "";
   if (ok === null) msg = "";
   else if (ok) msg = '<span class="ok">✓ right</span>';
-  else if (q.kind === "je" && typing) msg = '<span class="muted">not balanced or not complete yet</span>';
   else msg = '<span class="bad">✗ not yet, try again</span>';
   if (t) msg += ` <span class="muted">(${t} wrong ${t === 1 ? "try" : "tries"})</span>`;
   res.innerHTML = msg;
@@ -1073,7 +1030,6 @@ function answerText(q) {
   const v = S.ans[q.id];
   if (q.kind === "mc") return v === undefined ? "" : q.opts[+v];
   if (q.kind === "sel") return v === undefined || v === "" ? "" : q.opts[+v];
-  if (q.kind === "je") return Array.isArray(v) ? v.filter(r => r.a || r.dr || r.cr).map(r => `${r.a || "(no account)"}: ${r.dr ? "Dr " + r.dr : ""}${r.cr ? "Cr " + r.cr : ""}`).join("; ") : "";
   return v === undefined ? "" : String(v);
 }
 function buildXlsx() {
@@ -1110,13 +1066,6 @@ function buildXlsx() {
   for (const q of Q) {
     if (q.kind === "sel") written.push([q.n, q.label, answerText(q) || "(none)", Wr(S.ans[q.id + "w"] || "(blank)"), words(S.ans[q.id + "w"])]);
     if (q.kind === "text") written.push([q.n, q.label, "", Wr(S.ans[q.id] || "(blank)"), words(S.ans[q.id])]);
-  }
-  const je = [[B("Entry"), B("Line"), B("Account"), B("Debit"), B("Credit"), B("Entry right?")]];
-  for (const q of Q.filter(q => q.kind === "je")) {
-    const rows = (S.ans[q.id] || []).filter(r => r && (r.a || r.dr || r.cr));
-    const ok = isRight(q);
-    if (!rows.length) je.push([q.label, "", "(blank)", "", "", "blank"]);
-    rows.forEach((r, i) => je.push([i === 0 ? q.label : "", i + 1, r.a || "(no account)", isNaN(parseNum(r.dr)) ? (r.dr || "") : parseNum(r.dr), isNaN(parseNum(r.cr)) ? (r.cr || "") : parseNum(r.cr), i === 0 ? (ok ? "right" : "WRONG") : ""]));
   }
   const enc64 = b64(json), chunks = [];
   for (let i = 0; i < enc64.length; i += 30000) chunks.push([enc64.slice(i, i + 30000)]);
@@ -1234,8 +1183,7 @@ function keyRows() {
   return Q.filter(q => CHECKED.includes(q)).map(q => {
     let a;
     if (q.kind === "num") a = (q.unit === "$" ? money(q.ans(P), q.dec) : fmt(q.ans(P), q.dec) + (q.unit ? " " + q.unit : ""));
-    else if (q.kind === "mc") a = q.opts[correctMC(q)];
-    else a = q.lines(P).map(l => `${l.a}: ${l.dr ? "Dr " + fmt(l.dr, 2) : "Cr " + fmt(l.cr, 2)}`).join("; ");
+    else a = q.opts[correctMC(q)];
     return `<tr><td>${q.n}</td><td>${escHtml(q.label)}</td><td>${escHtml(a)}</td></tr>`;
   }).join("");
 }
