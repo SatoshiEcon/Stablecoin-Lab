@@ -250,7 +250,7 @@
     <div class="qs" data-sec="2a"></div>
 
     <h3>2B. Is MapleUSD fully backed?</h3>
-    <div class="why"><strong>What's happening:</strong> the <strong>coverage ratio</strong> compares the reserves to the coins outstanding. 100% means exactly $1 behind every coin. Above 100% means a cushion (a <em>surplus</em>); below 100% means a <em>shortfall</em>. Under the GENIUS Act, a payment stablecoin must be backed at least 1 to 1.</div>
+    <div class="why"><strong>What's happening:</strong> the <strong>coverage ratio</strong> compares the reserves to the coins outstanding. 100% means exactly $1 behind every coin. Above 100% means a cushion (a <em>surplus</em>); below 100% means a <em>shortfall</em>. Under the GENIUS Act, a payment stablecoin must be backed at least 1 to 1, so an issuer with a shortfall would have to add reserves or reduce the coins outstanding. Your numbers may show either a surplus or a shortfall.</div>
     <div class="ex"><b class="t">Example</b>Coins outstanding: $50,000,000. Reserves: $50,750,000.<br>Coverage ratio = 50,750,000 ÷ 50,000,000 × 100 = <strong>101.50%</strong>. Surplus = 50,750,000 − 50,000,000 = <strong>$750,000</strong>.</div>
     <div class="qs" data-sec="2b"></div>
 
@@ -267,7 +267,8 @@
     <h3>2E. Under the hood: read the smart contract</h3>
     <div class="tech">
       <p>Below is a simplified version of the contract that would run MapleUSD, written in the style of Solidity, the most common smart-contract language. You don't need to know how to code. The text after <span class="mono">//</span> on each line is a plain-English note.</p>
-      <p><strong>Why it matters to the business:</strong> whoever holds the <span class="mono">issuerAdmin</span> key can create coins, destroy coins and freeze accounts. That key is the issuer's most valuable and most dangerous asset. Real issuers usually require several people to approve each action (a <em>multi-signature</em> key) so no single stolen password can do damage.</p>
+      <p><strong>Why it matters to the business:</strong> whoever holds the <span class="mono">issuerAdmin</span> key can create coins, destroy coins and freeze accounts. That key is the issuer's most valuable and most dangerous asset. Real issuers usually require several people to approve each action (a <em>multi-signature</em> key) so no single stolen key can do damage.</p>
+      <p><strong>What the code can't check:</strong> notice that nothing in <span class="mono">mint</span> confirms that a customer's dollars actually reached the bank. A smart contract can't see a bank account. So the promise that every coin is backed is kept <em>outside</em> the code, through the issuer's own controls, the monthly reserve reports and the accounting firm that examines them (see 2F). Reserve verification is a separate control from the smart contract.</p>
     </div>
     <div class="qs" data-sec="2e"></div>
 
@@ -1108,6 +1109,7 @@ $("dlTop").addEventListener("click", download);
 
 /* ---------------- loading a saved file back in ---------------- */
 async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === "undefined") throw new Error("nodecomp");
   const ds = new DecompressionStream("deflate-raw");
   const stream = new Blob([bytes]).stream().pipeThrough(ds);
   return new Uint8Array(await new Response(stream).arrayBuffer());
@@ -1173,7 +1175,9 @@ $("loadFile").addEventListener("change", async e => {
     const st = sectionStats(); const tot = Object.values(st).reduce((x, v) => [x[0] + v.right, x[1] + v.total], [0, 0]);
     $("startStatus").innerHTML = `<span class="ok">✓ Loaded the work saved for ${escHtml(data.name)}.</span> Re-checked from the name: ${tot[0]} of ${tot[1]} checked answers right. Student code <span class="mono">${P.code}</span>. Pick up where you left off.`;
   } catch (err) {
-    $("startStatus").innerHTML = '<span class="bad">That file couldn\'t be read.</span> Choose the Excel file this page downloaded. If it was opened and saved again in Excel or Numbers, try an earlier copy.';
+    $("startStatus").innerHTML = err && err.message === "nodecomp"
+      ? '<span class="bad">This browser is too old to read a file that was re-saved in Excel.</span> Update your browser (Chrome, Edge, Firefox or Safari), or load the original file this page downloaded.'
+      : '<span class="bad">That file couldn\'t be read.</span> Choose the Excel file this page downloaded. If it was opened and saved again in Excel or Numbers, try an earlier copy.';
   }
 });
 window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
