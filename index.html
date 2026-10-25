@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stablecoin Lab</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1c1c1a; --muted: #67655f; --line: #d9d6cd;
+    --input: #fff7c2; --input-ink: #1a3fbf; --head: #e6ebf5; --soft: #e3f0dc; --tech: #efe8f7;
+    --good: #2b7a2f; --bad: #c0312b; --warn-bg: #fdecea; --accent: #b4500a; --code: #f1efe8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151513; --panel: #1f1f1c; --ink: #ecebe6; --muted: #a09d94; --line: #3a3933;
+      --input: #3b3518; --input-ink: #9db6ff; --head: #262c38; --soft: #22301d; --tech: #2c2438;
+      --good: #6cc070; --bad: #f06a62; --warn-bg: #3a1c1a; --accent: #f3a065; --code: #262622;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 80px; }
+  h2 { font-size: 1.25rem; margin: 0 0 6px; }
+  h3 { font-size: 1.05rem; margin: 22px 0 6px; }
+  h4 { font-size: .98rem; margin: 14px 0 4px; }
+  p { margin: 8px 0; }
+  a { color: var(--input-ink); }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+  .step { display: inline-block; background: var(--accent); color: #fff; border-radius: 999px; padding: 1px 10px; font-size: .8rem; font-weight: 700; margin-right: 6px; vertical-align: 2px; }
+  .muted { color: var(--muted); } .small { font-size: .9rem; } .note { font-size: .85rem; color: var(--muted); }
+  .ok { color: var(--good); font-weight: 700; } .bad { color: var(--bad); font-weight: 700; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .why { background: var(--head); border-radius: 8px; padding: 10px 12px; margin: 8px 0 12px; font-size: .93rem; }
+  .tech { background: var(--tech); border-radius: 8px; padding: 10px 12px; margin: 8px 0 12px; font-size: .93rem; }
+  .why p, .tech p { margin: 6px 0; } .why ul, .tech ul { margin: 4px 0 4px 18px; padding: 0; }
+  .ex { border-left: 4px solid var(--accent); background: var(--bg); border-radius: 0 8px 8px 0; padding: 8px 12px; margin: 8px 0 12px; font-size: .9rem; }
+  .ex b.t { display: block; margin-bottom: 2px; }
+  .scen { background: var(--soft); border-radius: 8px; padding: 10px 12px; margin: 8px 0 10px; }
+  .q { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+  .q .qn { font-weight: 700; color: var(--accent); margin-right: 4px; }
+  .q .prompt { margin: 0 0 8px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+  input.num { font: 700 1rem ui-monospace, Menlo, monospace; width: 170px; padding: 7px 10px; border: 2px solid var(--input-ink); border-radius: 8px; background: var(--input); color: var(--input-ink); }
+  input.num:disabled, select:disabled, textarea:disabled { opacity: .5; }
+  .unit { font-weight: 700; color: var(--muted); }
+  .res { font-size: .9rem; }
+  .hint { display: none; margin-top: 6px; font-size: .88rem; background: var(--warn-bg); border-radius: 8px; padding: 6px 10px; }
+  .hint.show { display: block; }
+  .opts label { display: flex; gap: 8px; align-items: flex-start; padding: 5px 6px; border-radius: 6px; cursor: pointer; }
+  .opts label:hover { background: var(--bg); }
+  .opts input { margin-top: 5px; }
+  textarea { width: 100%; min-height: 130px; font: inherit; padding: 8px 10px; border: 2px solid var(--input-ink); border-radius: 8px; background: var(--input); color: var(--ink); resize: vertical; }
+  select { font: inherit; padding: 6px 8px; border: 2px solid var(--input-ink); border-radius: 8px; background: var(--input); color: var(--ink); max-width: 100%; }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.t { border-collapse: collapse; margin: 8px 0; font-size: .9rem; }
+  table.t th, table.t td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; vertical-align: top; }
+  table.t th { background: var(--head); }
+  table.t td.r { text-align: right; font-family: ui-monospace, Menlo, monospace; }
+  table.je select { min-width: 220px; }
+  table.je input { width: 130px; font: 700 .95rem ui-monospace, Menlo, monospace; padding: 5px 8px; border: 2px solid var(--input-ink); border-radius: 6px; background: var(--input); color: var(--input-ink); }
+  pre.code { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 0; font: .82rem/1.55 ui-monospace, Menlo, monospace; overflow-x: auto; margin: 8px 0; }
+  pre.code .ln { display: inline-block; width: 3.2em; text-align: right; padding-right: .9em; color: var(--muted); user-select: none; }
+  pre.code .cm { color: var(--good); }
+  .types { display: grid; gap: 12px; }
+  .type { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .type h3 { margin: 0 0 4px; }
+  .type dl { margin: 6px 0 0; display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 12px; font-size: .92rem; }
+  .type dt { font-weight: 700; color: var(--muted); }
+  .type dd { margin: 0; }
+  @media (max-width: 620px) { .type dl { grid-template-columns: 1fr; gap: 2px; } .type dd { margin-bottom: 6px; } }
+  .explorer { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 8px 0; font-size: .88rem; }
+  .explorer .bar { background: var(--head); padding: 6px 12px; font-weight: 700; }
+  .explorer table { border-collapse: collapse; width: 100%; }
+  .explorer td { padding: 5px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+  .explorer td:first-child { color: var(--muted); width: 11em; }
+  .explorer td.h { word-break: break-all; font-family: ui-monospace, Menlo, monospace; }
+  .badge { display: inline-block; background: var(--soft); color: var(--good); border-radius: 999px; padding: 0 9px; font-weight: 700; }
+  .titlepage { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 28px 18px 18px; margin-bottom: 18px; text-align: center; }
+  .tp-title { font-weight: 800; font-size: 1.45rem; margin: 0 0 16px; }
+  .tp-fields { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  input.tp { width: min(520px, 100%); text-align: center; font: inherit; border: 0; border-bottom: 1px dashed var(--line); background: transparent; color: var(--ink); padding: 4px 6px; }
+  input.tp:focus { outline: none; border-bottom-color: var(--accent); }
+  input.tp[readonly] { border-bottom-color: transparent; }
+  input.tp#name { background: var(--input); border-radius: 6px; font-weight: 700; }
+  .locked { border: 2px dashed var(--line); border-radius: 8px; padding: 14px; text-align: center; color: var(--muted); }
+  .progress { font-size: .9rem; }
+  .progress td { padding: 3px 10px 3px 0; }
+  .savebar { border-top: 1px dashed var(--line); margin-top: 18px; padding-top: 12px; }
+  .warn { background: var(--warn-bg); border: 2px solid var(--bad); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .hidden { display: none !important; }
+  nav.toc { font-size: .92rem; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  nav.toc a { white-space: nowrap; }
+  footer p { margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header class="titlepage" aria-label="Title page">
+    <p class="tp-title" id="tpTitle"></p>
+    <div class="tp-fields">
+      <input class="tp" id="name" autocomplete="name" placeholder="Your first and last name" aria-label="Your name">
+      <input class="tp" id="dept" autocomplete="off" placeholder="Department" aria-label="Department">
+      <input class="tp" id="univ" autocomplete="off" placeholder="University" aria-label="University">
+      <input class="tp" id="course" autocomplete="off" placeholder="Course number: Course name" aria-label="Course">
+      <input class="tp" id="instructor" autocomplete="off" placeholder="Instructor" aria-label="Instructor">
+      <input class="tp" id="duedate" autocomplete="off" placeholder="Date" aria-label="Date">
+    </div>
+    <p class="note" style="text-align:center;margin:10px 0 0">Type your name on the first line. The title block follows APA 7th edition and goes on the first page of the file you hand in.</p>
+  </header>
+
+  <p class="sub">You are on the finance team at <strong>Maple Supply Co.</strong>, a U.S. manufacturer that buys steel from a supplier in Mexico and has offices in Mexico and Canada. Your CFO wants to know what stablecoins are, whether Maple should launch its own, whether to pay suppliers with one, what can go wrong, and how to put it all on the books. This lab walks you through each question, one section at a time.</p>
+
+  <section>
+    <h2>How this lab works</h2>
+    <ol class="small" style="margin:4px 0 8px 20px;padding:0">
+      <li><strong>Type your full name</strong> in the yellow box at the top and click <strong>Start</strong>. Your name creates <em>your own numbers</em>, so your answers won't match a classmate's. Use the same spelling every time. Your name locks once you start.</li>
+      <li><strong>Do the sections in any order.</strong> Each one stands on its own. Read the boxes first:
+        <ul style="margin:4px 0 4px 18px;padding:0">
+          <li><span style="background:var(--head);padding:0 6px;border-radius:4px">Blue boxes</span> explain the business and finance side.</li>
+          <li><span style="background:var(--tech);padding:0 6px;border-radius:4px">Purple "Under the hood" boxes</span> explain the technology and why it matters to the business.</li>
+          <li><span style="border-left:4px solid var(--accent);padding:0 6px">Orange "Example" boxes</span> show you how to do each calculation with sample numbers. Then you do it with yours.</li>
+        </ul>
+      </li>
+      <li><strong>The page checks your answers as you go.</strong> Press Tab or click outside the box to check. If you get one wrong, a hint appears. Keep trying until it's marked right; there's no limit on tries.</li>
+      <li><strong>Written questions</strong> have no single right answer. Your instructor grades your reasoning, not which side you pick.</li>
+      <li><strong>Save your work by downloading it.</strong> Click <strong>Download my work</strong> any time. To pick up later, open this page and click <strong>Load my saved work</strong>, then choose that file. Nothing is saved in the browser, so if you close the tab without downloading, your work is gone.</li>
+      <li><strong>Hand in</strong> the downloaded Excel file. Don't edit it in Excel, because the page reads it back exactly as it was downloaded.</li>
+    </ol>
+    <div class="row">
+      <button class="primary" id="startBtn">Start</button>
+      <button id="changeName" class="hidden">Change name</button>
+      <button id="loadBtn">Load my saved work</button>
+      <input type="file" id="loadFile" accept=".xlsx" class="hidden">
+      <button id="dlTop" disabled>Download my work</button>
+    </div>
+    <div id="startStatus" class="small"></div>
+    <div id="progress" class="progress hidden" style="margin-top:10px"></div>
+    <nav class="toc small" style="margin-top:8px">Jump to:
+      <a href="#s1">1. Know your stablecoins</a><a href="#s2">2. Design your own</a><a href="#s3">3. Pay with it</a><a href="#s4">4. Stress test</a><a href="#s5">5. Book it</a><a href="#s6">6. Your call</a>
+    </nav>
+  </section>
+
+  <!-- ===================================================== SECTION 1 ===================================================== -->
+  <section id="s1">
+    <h2><span class="step">Section 1</span>Know your stablecoins</h2>
+    <div class="why">
+      <p><strong>What's a stablecoin?</strong> A stablecoin is a digital token built to hold a steady value, usually $1. It moves on a blockchain like any cryptocurrency, so a transfer can be confirmed in seconds to minutes, any day of the week, anywhere in the world. But it's priced in dollars, so a business can use it for invoices, payroll and contracts that are written in dollars.</p>
+      <p><strong>Three different "done" moments:</strong> (1) the network <em>confirms</em> the transfer, (2) it becomes <em>final</em>, meaning the network won't reverse it, and (3) the recipient turns the coins into money they can spend locally, which still depends on an exchange or bank at their end. The first two can take seconds. The third can take longer.</p>
+      <p><strong>Why companies care:</strong> a regular cross-border wire passes through one to three banks (called correspondent banks). Each one charges a fee and adds a day or more. A stablecoin payment replaces that chain with one update to a shared record. The trade-off is that the risk moves from the banks in the middle to the coin itself: what backs it, who controls it, and what happens under stress.</p>
+      <p><strong>"Stablecoin" is a family, not one thing.</strong> They all aim for a steady price, but they get there in very different ways, and each way has its own strengths and its own weak points. A finance professional needs to know which kind they're holding.</p>
+    </div>
+    <div class="tech">
+      <p><strong>Under the hood: what a token actually is</strong></p>
+      <ul>
+        <li><strong>A blockchain</strong> is a shared record of who owns what. Thousands of computers keep identical copies and agree on every change, so no single company can quietly edit it.</li>
+        <li><strong>A token is not a file on your computer.</strong> It's a line in that shared record: "address 0x7a3… holds 250,000 coins." Sending a token updates two lines.</li>
+        <li><strong>An address</strong> works like an account number. Whoever holds the matching <strong>private key</strong> can send from it. A private key is a very large secret number used to digitally sign each transaction. Unlike a password, it can't be reset: if it's lost, so are the funds, and if it's stolen, the thief controls them.</li>
+        <li><strong>A smart contract</strong> is a small program stored on the blockchain that holds the rules for a token: who can create new coins (<em>mint</em>), who can destroy them (<em>burn</em>), and whether anyone can <em>freeze</em> an account. Everyone can read the rules, and the blockchain enforces them automatically.</li>
+        <li><strong>Network fees</strong> are paid in the blockchain's own coin (ETH on Ethereum, SOL on Solana), not in the stablecoin. They're usually a fraction of a cent to a few dollars.</li>
+      </ul>
+      <p><strong>Why it matters to the business:</strong> the smart contract's rules decide who has power over your money. That's why two coins that both say "$1" can carry very different risks.</p>
+    </div>
+
+    <h3>The six main types</h3>
+    <p class="small">Each type gets the same five questions: how it works, what's under the hood, what it does well, what can go wrong, and real examples.</p>
+    <p class="small"><strong>A note on the labels:</strong> people use "stablecoin" loosely. Types 1, 2, 4 and 5 aim for $1. Type 3 tracks a commodity such as gold, not the dollar. In Type 6, a state-issued token like FRNT is a stablecoin, but a bank <em>deposit token</em> is legally a bank deposit, which is a different thing from a stablecoin even though the technology looks the same. U.S. law (Section 2F) uses a narrower term, "payment stablecoin," that covers only some of these.</p>
+    <div class="types">
+      <div class="type">
+        <h3>1. Fiat-backed (backed by dollars held by a company)</h3>
+        <dl>
+          <dt>How it works</dt><dd>A company (the <em>issuer</em>) holds $1 in cash or short-term U.S. Treasury bills for every coin. When a customer wires in dollars, the issuer mints new coins. When a customer cashes out (<em>redeems</em>), the issuer burns the coins and wires the dollars back.</dd>
+          <dt>Under the hood</dt><dd>The reserves sit in banks and with custodians, off the blockchain, so the blockchain can't prove they exist. Independent accounting firms check them and publish reports. The issuer holds an <em>admin key</em> in the smart contract that can mint, burn and freeze.</dd>
+          <dt>What it does well</dt><dd>Simple for a finance team to understand. The most widely used and easiest to trade. Already used by major payment companies: since December 2025, Visa has let some U.S. banks settle with it in USDC on the Solana blockchain. Now covered by U.S. federal law (the GENIUS Act, see Section 2).</dd>
+          <dt>What can go wrong</dt><dd>You depend on the issuer and on the banks holding its reserves. The issuer can freeze accounts. In March 2023, about $3.3 billion of USDC's reserves were stuck at Silicon Valley Bank when it failed. USDC traded down to about 88 cents for a weekend, then recovered once U.S. regulators guaranteed the bank's deposits.</dd>
+          <dt>Examples</dt><dd>USDC (Circle), USDT (Tether), PYUSD (issued by Paxos for PayPal)</dd>
+        </dl>
+      </div>
+      <div class="type">
+        <h3>2. Crypto-backed (backed by other crypto, locked in a smart contract)</h3>
+        <dl>
+          <dt>How it works</dt><dd>A user locks crypto worth <em>more</em> than the coins they want, for example $150 of ETH to mint 100 coins. This is called <em>over-collateralization</em>. If the ETH price falls too far, the system automatically sells the locked ETH (a <em>liquidation</em>) to cover the coins. The extra cushion is what keeps every coin backed.</dd>
+          <dt>Under the hood</dt><dd>Smart contracts called <em>vaults</em> hold the collateral. <em>Oracles</em> (price feeds) tell the contract what the collateral is worth. Automated programs called <em>keepers</em> watch every vault and trigger liquidations. Holders of a governance token vote on settings such as fees and the minimum collateral ratio. Because code, not a company, runs the peg, some people call DAI "algorithmic." The difference from Type 4 is that real assets sit behind every coin.</dd>
+          <dt>What it does well</dt><dd>No single company holds the reserves. Anyone can check every vault on the blockchain at any moment. Runs 24/7 with no bank in the middle. DAI has stayed close to $1 since 2017, through several major crypto crashes.</dd>
+          <dt>What can go wrong</dt><dd>Collateral prices can fall fast. The system depends on its code, its oracles and its voters. In the March 2020 crash, the blockchain was so congested that some liquidations sold collateral for almost nothing, and the system had to raise money to cover the gap. DAI later added fiat-backed coins like USDC as collateral, which made it steadier but also tied it partly to Type 1.</dd>
+          <dt>Examples</dt><dd>DAI and its newer version USDS (Sky, formerly MakerDAO), LUSD (Liquity)</dd>
+        </dl>
+      </div>
+      <div class="type">
+        <h3>3. Commodity-backed (backed by a physical asset like gold)</h3>
+        <dl>
+          <dt>How it works</dt><dd>Each token represents a set amount of a commodity held in a vault. For example, one PAX Gold token represents one troy ounce of gold in London vaults. Note that it's "stable" against gold, not against the dollar, so its dollar price moves with the price of gold.</dd>
+          <dt>Under the hood</dt><dd>The issuer mints a token when gold is added to the vault and burns it when gold is taken out. Bar serial numbers and vault audits are published so holders can check that the gold exists.</dd>
+          <dt>What it does well</dt><dd>You can own small fractions of gold, move them around the clock, and avoid storage and shipping costs.</dd>
+          <dt>What can go wrong</dt><dd>The price moves with gold, so it isn't a dollar payment tool. You trust the issuer and the vault, and your legal claim to the actual gold depends on the issuer's terms.</dd>
+          <dt>Examples</dt><dd>PAX Gold (PAXG), Tether Gold (XAUT)</dd>
+        </dl>
+      </div>
+      <div class="type">
+        <h3>4. Algorithmic (no reserves; code manages the supply)</h3>
+        <dl>
+          <dt>How it works</dt><dd>There's no pile of reserves. Code grows or shrinks the supply to push the price toward $1. TerraUSD (UST) did this with a sister token, LUNA: you could always swap 1 UST for $1 worth of newly created LUNA, and the reverse. Other designs, like Ampleforth, change the number of coins in every wallet each day (a <em>rebase</em>).</dd>
+          <dt>Under the hood</dt><dd>The whole system lives in smart contracts. The mint and burn rules are the only thing holding the price.</dd>
+          <dt>What it does well</dt><dd>Very capital efficient: a dollar-priced coin without parking billions of dollars in a bank. Fully on-chain, with no company or bank needed.</dd>
+          <dt>What can go wrong</dt><dd>It works only while people believe the sister token has value. In May 2022, UST lost its peg, the swaps created huge amounts of new LUNA, and about $40 billion in value disappeared in under a week. The GENIUS Act does not count these as "payment stablecoins"; it orders a Treasury study of them instead.</dd>
+          <dt>Examples</dt><dd>TerraUSD (UST, collapsed in 2022), Ampleforth (AMPL)</dd>
+        </dl>
+      </div>
+      <div class="type">
+        <h3>5. Hybrid and synthetic (part backing, or a "dollar" built from hedged positions)</h3>
+        <dl>
+          <dt>How it works</dt><dd>Hybrids mix collateral with an algorithm. Frax launched in 2020 partly backed and partly algorithmic, then its holders voted in 2023 to move to full backing. A <em>synthetic dollar</em> holds crypto plus an equal bet that the crypto's price will fall (a short futures position). When the crypto goes up or down, the two sides cancel out, leaving a steady dollar value.</dd>
+          <dt>Under the hood</dt><dd>Smart contracts on the blockchain, plus positions held on crypto exchanges. The short position earns or pays a <em>funding rate</em> that changes with the market.</dd>
+          <dt>What it does well</dt><dd>Can earn income from funding rates and staking, which can be passed on to holders. Doesn't need a bank.</dd>
+          <dt>What can go wrong</dt><dd>Funding rates can turn negative, so the coin starts paying instead of earning. It depends on exchanges and custodians. Because these coins aim to earn a return, they generally fall outside the GENIUS Act's rules for payment stablecoins.</dd>
+          <dt>Examples</dt><dd>Frax (FRAX), Ethena (USDe)</dd>
+        </dl>
+      </div>
+      <div class="type">
+        <h3>6. Government and bank-issued</h3>
+        <dl>
+          <dt>How it works</dt><dd>A government or a bank issues the token. Wyoming launched the Frontier Stable Token (FRNT) in August 2025, backed by cash and short-term Treasuries with at least 102% in reserves. Banks are testing <em>deposit tokens</em>: a token that is a claim on a bank deposit, like a digital version of money in your bank account. JPMorgan began testing one, JPMD, in 2025.</dd>
+          <dt>Under the hood</dt><dd>The technology is the same as the other types. FRNT launched on seven blockchains, including Ethereum, Solana, Avalanche and Polygon. What's different is who stands behind it and which law applies.</dd>
+          <dt>What it does well</dt><dd>A well-known, regulated issuer. Wyoming's pilot cut a 45-day contractor payment cycle to near-instant settlement.</dd>
+          <dt>What can go wrong</dt><dd>Smaller and harder to trade than USDC or USDT. Often limited to certain customers or networks. Redemption rights depend on state law or the bank's terms, so they differ from coin to coin.</dd>
+          <dt>Examples</dt><dd>FRNT (State of Wyoming), JPMD (JPMorgan deposit token)</dd>
+        </dl>
+      </div>
+    </div>
+    <p class="note">Sources: <a href="https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.21951.html" target="_blank" rel="noopener">Visa (Dec. 16, 2025)</a>; <a href="https://www.theblock.co/post/367459/wyoming-launches-first-state-backed-stablecoin-on-seven-blockchains" target="_blank" rel="noopener">The Block on FRNT (Aug. 2025)</a>; Stein Smith (2024), Ch. 5.</p>
+
+    <h3>Check your understanding</h3>
+    <div class="locked qlock">Type your name and click Start to see your questions.</div>
+    <div class="qs" data-sec="1"></div>
+    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
+  </section>
+
+  <!-- ===================================================== SECTION 2 ===================================================== -->
+  <section id="s2">
+    <h2><span class="step">Section 2</span>Design your own stablecoin</h2>
+    <div class="why">
+      <p><strong>The idea:</strong> Maple's CFO is thinking about launching <strong>MapleUSD</strong>, a fiat-backed coin that Maple's dealers would use to pay their invoices. PayPal did something similar with PYUSD. In this section you make the design decisions, work out the issuer's math, read the smart contract, and check the rules.</p>
+      <p><strong>The issuer's business model:</strong> customers hand the issuer $1 and get 1 coin. The issuer invests that dollar, mostly in short-term Treasury bills, and keeps the interest. Holders get none of it. That's how issuers make money, and it's also why reserve quality matters: an issuer chasing more interest might hold riskier assets.</p>
+    </div>
+
+    <h3>2A. Make the design choices</h3>
+    <p class="small">There's no single right answer. Pick one option for each and explain your reasoning. Your instructor reads your thinking, not which option you picked.</p>
+    <div class="locked qlock">Type your name and click Start to see your questions.</div>
+    <div class="qs" data-sec="2a"></div>
+
+    <h3>2B. Is MapleUSD fully backed?</h3>
+    <div class="why"><strong>What's happening:</strong> the <strong>coverage ratio</strong> compares the reserves to the coins outstanding. 100% means exactly $1 behind every coin. Above 100% means a cushion (a <em>surplus</em>); below 100% means a <em>shortfall</em>. Under the GENIUS Act, a payment stablecoin must be backed at least 1 to 1.</div>
+    <div class="ex"><b class="t">Example</b>Coins outstanding: $50,000,000. Reserves: $50,750,000.<br>Coverage ratio = 50,750,000 ÷ 50,000,000 × 100 = <strong>101.50%</strong>. Surplus = 50,750,000 − 50,000,000 = <strong>$750,000</strong>.</div>
+    <div class="qs" data-sec="2b"></div>
+
+    <h3>2C. How the issuer makes money</h3>
+    <div class="ex"><b class="t">Example</b>Coins outstanding: $50,000,000. 15% of reserves held as cash (earns nothing), the other 85% in T-bills earning 4.00% a year.<br>Annual interest = 50,000,000 × 0.85 × 0.04 = <strong>$1,700,000</strong>. Per month = 1,700,000 ÷ 12 = <strong>$141,667</strong>.</div>
+    <div class="qs" data-sec="2c"></div>
+
+    <h3>2D. A wave of redemptions</h3>
+    <div class="why"><strong>What's happening:</strong> cash can be paid out right away. Assets that earn interest, like T-bills, have to be sold or borrowed against first. More cash means faster, more certain redemptions but less interest income. That's the issuer's central trade-off.<br>
+      <strong>Lab simplification:</strong> to keep the math simple, this section assumes cash is available today and T-bill money arrives the next business day. In practice T-bills are among the most liquid assets in the world, and issuers can often raise cash the same day by selling them or borrowing against them (a <em>repo</em>). The point is the trade-off between speed, certainty and income, not that T-bills are hard to sell.</div>
+    <div class="ex"><b class="t">Example</b>Coins outstanding: $50,000,000. Cash share: 15%. Holders ask to redeem 20% of all coins in one day.<br>Requests = 50,000,000 × 0.20 = <strong>$10,000,000</strong>. Cash on hand = 50,000,000 × 0.15 = <strong>$7,500,000</strong>, so that's paid today. Waiting until tomorrow = 10,000,000 − 7,500,000 = <strong>$2,500,000</strong>. To pay everyone today, cash would need to be at least <strong>20%</strong> of reserves.</div>
+    <div class="qs" data-sec="2d"></div>
+
+    <h3>2E. Under the hood: read the smart contract</h3>
+    <div class="tech">
+      <p>Below is a simplified version of the contract that would run MapleUSD, written in the style of Solidity, the most common smart-contract language. You don't need to know how to code. The text after <span class="mono">//</span> on each line is a plain-English note.</p>
+      <p><strong>Why it matters to the business:</strong> whoever holds the <span class="mono">issuerAdmin</span> key can create coins, destroy coins and freeze accounts. That key is the issuer's most valuable and most dangerous asset. Real issuers usually require several people to approve each action (a <em>multi-signature</em> key) so no single stolen password can do damage.</p>
+    </div>
+    <div class="qs" data-sec="2e"></div>
+
+    <h3>2F. Check the rules</h3>
+    <div class="why">
+      <p><strong>The GENIUS Act</strong> became law on July 18, 2025. It's the first U.S. federal law for "payment stablecoins." The Office of the Comptroller of the Currency (OCC) finalized its rules for the law on October 21, 2026, and the law takes effect on <strong>January 18, 2027</strong>. Key points:</p>
+      <ul>
+        <li><strong>Reserves 1 to 1</strong>, only in cash, bank deposits, Treasury bills maturing in 93 days or less, certain repurchase agreements, and government money market funds. No crypto, no corporate bonds.</li>
+        <li><strong>Monthly reports</strong> of what's in the reserves, published on the issuer's website, examined by a registered public accounting firm, and certified by the CEO and CFO.</li>
+        <li><strong>No interest</strong> may be paid to holders just for holding the coin.</li>
+        <li><strong>Reserves can't be lent out or pledged</strong>, with a few narrow exceptions.</li>
+        <li><strong>Who can issue:</strong> subsidiaries of insured banks, issuers approved by the OCC, and state-approved issuers (which move to federal oversight above $10 billion). A public company that isn't mainly in the financial business needs a <strong>unanimous</strong> vote of the Stablecoin Certification Review Committee.</li>
+        <li><strong>If an issuer fails,</strong> coin holders are paid from the reserves ahead of other creditors.</li>
+      </ul>
+      <p class="note" style="margin-top:6px">Sources: <a href="https://www.gibsondunn.com/the-genius-act-a-new-era-of-stablecoin-regulation/" target="_blank" rel="noopener">Gibson Dunn, "The GENIUS Act" (July 2025)</a>; <a href="https://occ.gov/news-issuances/news-releases/2026/nr-occ-2026-92.html" target="_blank" rel="noopener">OCC News Release 2026-92 (Oct. 21, 2026)</a>.</p>
+    </div>
+    <div class="qs" data-sec="2f"></div>
+    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
+  </section>
+
+  <!-- ===================================================== SECTION 3 ===================================================== -->
+  <section id="s3">
+    <h2><span class="step">Section 3</span>Pay with it</h2>
+    <div class="why"><strong>The idea:</strong> Maple doesn't have to issue its own coin to use one. Here you compare paying a supplier by wire and by stablecoin, read the payment on a block explorer, split a paycheck automatically, and net out payments between Maple's own offices.</div>
+
+    <h3>3A. Wire or stablecoin?</h3>
+    <div class="why">
+      <p><strong>What's happening:</strong> a wire to Mexico usually costs three things: the sending bank's fee, a fee from each correspondent bank in the middle, and an <strong>FX spread</strong>, the hidden markup in the exchange rate. The spread is a percentage of the payment, so it's often the biggest cost.</p>
+      <p>A stablecoin payment also has costs: a small fee to convert dollars into the coin, the network fee, and the supplier's cost to turn the coin into pesos at a local exchange (the <strong>off-ramp spread</strong>). Fiat is only converted at the two ends; the middle is one transfer.</p>
+      <p><strong>Lab assumptions:</strong> Aceros can receive USDC and convert it to pesos through a licensed provider, and the fees below are the only costs. Real comparisons are rarely that clean. You'll name what this model leaves out in the written question at the end of Section 3.</p>
+    </div>
+    <div class="ex"><b class="t">Example</b>Invoice: $200,000. Wire: $40 bank fee, 1 correspondent bank charging $20, FX spread 1.50%. Stablecoin: 0.10% conversion fee, $0.25 network fee, 0.40% off-ramp spread.<br>
+      Wire cost = 40 + 20 × 1 + 200,000 × 0.015 = 40 + 20 + 3,000 = <strong>$3,060.00</strong><br>
+      Stablecoin cost = 200,000 × 0.001 + 0.25 + 200,000 × 0.004 = 200 + 0.25 + 800 = <strong>$1,000.25</strong><br>
+      Savings = 3,060.00 − 1,000.25 = <strong>$2,059.75</strong>, which is 2,059.75 ÷ 200,000 × 100 = <strong>1.03%</strong> of the invoice.<br>
+      Early-payment discount: if the supplier gives 1.0% off for paying within 24 hours, that's worth 200,000 × 0.01 = <strong>$2,000.00</strong>.</div>
+    <div class="qs" data-sec="3a"></div>
+
+    <h3>3B. Under the hood: read the block explorer</h3>
+    <div class="tech">
+      <p>A <strong>block explorer</strong> is a public website that shows every transaction on a blockchain. Anyone can look up a payment by its <strong>transaction hash</strong>, a unique ID made by running the transaction's details through a hash function (the same kind of math as SHA-256).</p>
+      <p><strong>Why it matters to the business:</strong> both sides can see that the payment happened, when and for how much, without calling a bank. Once a payment is <strong>finalized</strong>, the network won't reverse it: no batch cutoff and no waiting for a bank to confirm. Two things finality does <em>not</em> mean: a fiat-backed issuer can still freeze the coins at the receiving address afterward, and a payment sent by mistake can still be recovered off the blockchain, through the contract with the supplier or in court. The payment is also <em>public</em>. Anyone who knows Maple's address can see its payments, which is a privacy issue for a company.</p>
+      <p>Network fees are paid in the blockchain's own coin. To get the fee in dollars, multiply the fee in that coin by that coin's price.</p>
+    </div>
+    <div class="ex"><b class="t">Example</b>Network fee: 0.000150 ETH. ETH price: $3,000. Fee in dollars = 0.000150 × 3,000 = <strong>$0.4500</strong>.</div>
+    <div class="qs" data-sec="3b"></div>
+
+    <h3>3C. Payroll that splits itself</h3>
+    <div class="tech"><strong>Under the hood:</strong> a smart contract can split one payment into pieces at the moment it's paid. For payroll, it could send the net pay to the worker's address and the tax withholding to a tax account in the same transaction. Today, companies hold withholdings and send them on a schedule later. <strong>This is a hypothetical:</strong> U.S. tax authorities don't currently accept payroll taxes in stablecoins, so treat this as a picture of what programmable payroll could do.</div>
+    <div class="ex"><b class="t">Example</b>Gross pay: $5,000. Withholding rate: 20%. Withholding = 5,000 × 0.20 = <strong>$1,000.00</strong>. Net pay = 5,000 − 1,000 = <strong>$4,000.00</strong>.</div>
+    <div class="qs" data-sec="3c"></div>
+
+    <h3>3D. Netting between Maple's offices</h3>
+    <div class="why"><strong>What's happening:</strong> Maple's U.S., Mexico and Canada offices owe each other money. Instead of paying every bill separately, the treasury team adds up what each office is owed and what it owes, and only moves the difference. This is called <strong>netting</strong>. Each office's <strong>net position</strong> = what it's owed − what it owes. A positive number means it receives money; a negative number means it pays. All the net positions add up to zero. The money that actually moves is the total of the positive net positions.</div>
+    <div class="ex"><b class="t">Example</b>U.S. owes Mexico $500,000. Mexico owes Canada $300,000. Canada owes U.S. $200,000.<br>
+      Mexico: owed 500,000 − owes 300,000 = <strong>+$200,000</strong>. Canada: owed 300,000 − owes 200,000 = <strong>+$100,000</strong>. U.S.: owed 200,000 − owes 500,000 = <strong>−$300,000</strong>.<br>
+      Instead of $1,000,000 in three payments, only <strong>$300,000</strong> moves (200,000 + 100,000).</div>
+    <div class="qs" data-sec="3d"></div>
+    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
+  </section>
+
+  <!-- ===================================================== SECTION 4 ===================================================== -->
+  <section id="s4">
+    <h2><span class="step">Section 4</span>Stress test</h2>
+    <div class="why"><strong>The idea:</strong> every stablecoin design keeps its price near $1 through a specific mechanism. Here you work through each mechanism, both when it works and when it's under pressure. A CFO doesn't need to love or fear stablecoins, but they do need to know what holds the price up.</div>
+
+    <h3>4A. How a fiat-backed coin holds $1: the arbitrage loop</h3>
+    <div class="why">
+      <p><strong>What's happening:</strong> <em>arbitrage</em> means buying something in one place and selling it in another for a profit.</p>
+      <ul>
+        <li><strong>If the coin trades below $1</strong>, a trader buys coins cheaply on an exchange and redeems them with the issuer for $1 each. The issuer burns those coins, the supply falls, and the price rises back toward $1.</li>
+        <li><strong>If the coin trades above $1</strong>, a trader gives the issuer $1 to mint a new coin and sells it on an exchange for more. New supply pushes the price back down.</li>
+      </ul>
+      <p>The peg is held by this loop, not by faith in the brand. And the loop only works if redemption at $1 is actually available when traders need it.</p>
+    </div>
+    <div class="ex"><b class="t">Example</b>Price: $0.980. A trader buys 100,000 coins and redeems them. The issuer charges a 0.05% redemption fee.<br>
+      Profit = 100,000 × (1 − 0.980) − 100,000 × 0.0005 = 2,000 − 50 = <strong>$1,950.00</strong>.<br>
+      Price: $1.015. A trader mints 100,000 coins at $1 and sells them. Profit = 100,000 × (1.015 − 1) = <strong>$1,500.00</strong>.</div>
+    <div class="qs" data-sec="4a"></div>
+
+    <h3>4B. When redemptions stop</h3>
+    <div class="why"><strong>What's happening:</strong> this is what happened to USDC over the weekend of March 10, 2023. Part of the reserves were stuck at a failed bank and the banking system was closed for the weekend, so redemptions slowed. With the loop broken, the price fell. Most of the reserves were fine the whole time. Once regulators guaranteed the bank's deposits, redemptions resumed and the price returned to $1.</div>
+    <div class="ex"><b class="t">Example</b>Coins outstanding: $40,000,000,000. 8% of reserves at the failed bank: 40,000,000,000 × 0.08 = <strong>$3,200,000,000</strong> stuck.<br>
+      A company holds 1,000,000 coins and sells them at $0.900: it gets $900,000, a loss of 1,000,000 × (1 − 0.900) = <strong>$100,000.00</strong>.</div>
+    <div class="qs" data-sec="4b"></div>
+
+    <h3>4C. How a crypto-backed coin holds $1: vaults and liquidation</h3>
+    <div class="why"><strong>What's happening:</strong> the <strong>collateral ratio</strong> = value of the locked collateral ÷ coins minted × 100. If the minimum is 150%, the most you can mint is the collateral value ÷ 1.5. The <strong>liquidation price</strong> is the collateral price at which the ratio hits exactly 150%: coins minted × 1.5 ÷ amount of collateral. Below that price, the vault is liquidated and its collateral is sold to repay the coins.</div>
+    <div class="ex"><b class="t">Example</b>Lock 100 ETH at $3,000. Collateral value = 100 × 3,000 = <strong>$300,000</strong>. Most you can mint at 150% = 300,000 ÷ 1.5 = <strong>$200,000</strong>.<br>
+      Mint 150,000 coins instead (a safer ratio of 200%). Liquidation price = 150,000 × 1.5 ÷ 100 = <strong>$2,250.00</strong> per ETH.<br>
+      If ETH falls 30%: new value = 300,000 × 0.70 = 210,000. New ratio = 210,000 ÷ 150,000 × 100 = <strong>140.00%</strong>, which is below 150%, so the vault is liquidated.</div>
+    <div class="tech"><strong>Under the hood: oracles.</strong> A smart contract can't look up a price on its own. An <em>oracle</em> feeds it outside data, like the ETH price. Good systems combine several sources so one bad reading can't move it. But if the feed is wrong, the contract acts on the wrong number, and code doesn't stop to ask questions. Prediction markets have seen the same weakness: in one case, someone heated the weather sensor a bet relied on to win a temperature bet.</div>
+    <div class="qs" data-sec="4c"></div>
+
+    <h3>4D. How an algorithmic coin holds $1, and what happened to Terra</h3>
+    <div class="why"><strong>What's happening:</strong> with UST, anyone could burn 1 UST and receive $1 worth of newly created LUNA. When UST was below $1, this let traders profit and shrank UST's supply, much like the arbitrage loop in 4A. The difference is what you get when you redeem: a fiat-backed coin pays out dollars from a reserve, while UST paid out new LUNA. LUNA minted = dollars of UST burned ÷ LUNA price. When LUNA's price falls, each dollar of UST burned creates more LUNA.</div>
+    <div class="ex"><b class="t">Example</b>Day 1: $500,000,000 of UST burned, LUNA at $80.00. LUNA minted = 500,000,000 ÷ 80 = 6,250,000 = <strong>6.25 million</strong>.<br>
+      Day 2: same amount burned, LUNA at $32.00. Minted = 500,000,000 ÷ 32 = 15,625,000 = <strong>15.63 million</strong>. That's 2.5 times as much new LUNA, which pushes LUNA's price down further.</div>
+    <div class="qs" data-sec="4d"></div>
+    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
+  </section>
+
+  <!-- ===================================================== SECTION 5 ===================================================== -->
+  <section id="s5">
+    <h2><span class="step">Section 5</span>Book it</h2>
+    <div class="why">
+      <p><strong>Quick refresher:</strong> every journal entry has at least one <strong>debit</strong> and one <strong>credit</strong>, and total debits must equal total credits. Assets and expenses go <em>up</em> with a debit. Liabilities, revenue and gains go <em>up</em> with a credit.</p>
+      <p><strong>Where stablecoins fit today:</strong> FASB's crypto rule (ASU 2023-08, which requires crypto to be measured at fair value) covers only crypto assets that <em>don't</em> give the holder a right to underlying goods, services or other assets. A fiat-backed stablecoin gives the holder a right to redeem it for dollars, so most stablecoins fall outside that rule.</p>
+      <p><strong>What's changing:</strong> on August 18, 2026, FASB issued a proposed update to the cash flow standard (Topic 230). It doesn't change the definition of a cash equivalent. Instead, it adds examples showing when certain stablecoins <em>could</em> be classified as cash equivalents, which remains a company's accounting policy choice. The examples describe a stablecoin with (1) an on-demand contractual right to redeem for cash, (2) redemption directly with the issuer for a known amount of cash, and (3) issuer reserves of at least 1 to 1, kept separate in short-term, highly liquid assets. Being tradable on an exchange alone wouldn't be enough. The proposal also adds a yearly disclosure of the main types of cash equivalents a company holds. Comments are due November 19, 2026, no effective date has been set, and the final version could change.</p>
+      <p><strong>Lab conventions</strong> (simplifications for practice, not the only correct treatment):</p>
+      <ul>
+        <li>Record stablecoins in their own asset account, <strong>Stablecoin holdings (USDC)</strong>, separate from cash in the bank. Under current rules, how a company classifies stablecoins depends on its facts and its auditors.</li>
+        <li>Maple records steel purchases using a <strong>periodic inventory system</strong> and records early-payment discounts in a <strong>Purchase discounts</strong> account. Under a perpetual system, the discount would reduce Inventory instead.</li>
+        <li>Round every amount to the cent.</li>
+      </ul>
+      <p class="note">Sources: <a href="https://storage.fasb.org/Proposed%20ASU%20Statement%20of%20Cash%20Flows%20%28Topic%20230%29.pdf" target="_blank" rel="noopener">FASB proposed ASU, Statement of Cash Flows (Topic 230), Aug. 18, 2026</a>; <a href="https://kpmg.com/us/en/frv/reference-library/2026/fasb-issues-proposed-asu-cash-equivalents.html" target="_blank" rel="noopener">KPMG summary</a>; FASB ASU 2023-08 (Subtopic 350-60).</p>
+    </div>
+    <div class="tech"><strong>Under the hood: the blockchain as an audit trail.</strong> Every stablecoin payment has a transaction hash and a timestamp that anyone can check on a block explorer. If the treasury team saves that hash with each journal entry, an auditor can confirm the payment directly instead of waiting for a bank confirmation. Matching the books to the blockchain (reconciliation) can then be done continuously instead of at month end.</div>
+    <div class="ex"><b class="t">Example: how to fill in an entry</b>Maple buys $10,000 of office supplies and pays in USDC.<br>
+      Line 1: <strong>Supplies expense</strong>, debit 10,000.00. Line 2: <strong>Stablecoin holdings (USDC)</strong>, credit 10,000.00.<br>
+      Pick each account from the list and type the amount in the Debit <em>or</em> Credit column, not both. The lines can go in any order.</div>
+    <div class="qs" data-sec="5"></div>
+    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
+  </section>
+
+  <!-- ===================================================== SECTION 6 ===================================================== -->
+  <section id="s6">
+    <h2><span class="step">Section 6</span>Your call</h2>
+    <div class="why">This is the question your DAR discussion and your capstone keep coming back to. Use what you worked out in this lab: real numbers from your sections, at least one mechanism (how a peg holds, or how it can fail), and the rules. There's no right side. Your instructor grades how well you support your answer.</div>
+    <div class="locked qlock">Type your name and click Start to see your questions.</div>
+    <div class="qs" data-sec="6"></div>
+  </section>
+
+  <section>
+    <h2><span class="step">Hand in</span>Download your work</h2>
+    <p class="small">Download your work as an Excel file. It opens in Excel or Numbers. It lists every answer, whether it was right, your wrong tries and your written answers. Upload this file to Blackboard as your lab submission. Don't edit and re-save it: your instructor loads it back into this page to check it.</p>
+    <div class="row"><button class="primary" id="download" disabled>Download my work (Excel)</button><button class="ldBtn">Load my saved work</button><span class="note" id="dlNote"></span></div>
+    <div id="finalProgress" class="progress"></div>
+  </section>
+
+  <section id="instr" class="hidden">
+    <h2>Instructor tools</h2>
+    <p class="small">Enter the instructor passcode. Then type a student's name at the top and click Start to see that student's answer key. To check a submission, click <strong>Load my saved work</strong> and choose the student's file: the page re-checks every answer from the student's name, ignoring anything typed into the Excel file afterward.</p>
+    <div class="row"><input class="num" id="keyPass" type="password" style="width:240px" aria-label="Instructor passcode"><button id="keyBtn">Show answer key</button><span id="keyStatus" class="small"></span></div>
+    <div id="keyOut" class="scroll"></div>
+    <h3>Suggested rubric (70 points)</h3>
+    <div class="scroll"><table class="t">
+      <tr><th>Part</th><th>Points</th><th>What earns them</th></tr>
+      <tr><td>1. Know your stablecoins</td><td>5</td><td>Checked answers right</td></tr>
+      <tr><td>2. Design your own</td><td>15</td><td>Checked answers right (10); design choices and the written launch answer are supported with numbers and a rule (5)</td></tr>
+      <tr><td>3. Pay with it</td><td>12</td><td>Checked answers right (8); the supplier answer uses the numbers and names a real cost or risk the model leaves out (4)</td></tr>
+      <tr><td>4. Stress test</td><td>13</td><td>Checked answers right (10); the sell-or-wait answer explains the trade-off (3)</td></tr>
+      <tr><td>5. Book it</td><td>10</td><td>Entries and questions right</td></tr>
+      <tr><td>6. Your call</td><td>15</td><td>Clear position; uses the student's own numbers; explains a peg mechanism and how it fails; addresses rules or accounting</td></tr>
+    </table></div>
+    <p class="note">Wrong tries count only different wrong answers, and students can retry until they're right. Use them as a signal of where students struggled, not as a penalty. The answer formulas live in the page's code, so this lab is a learning tool, not a tamper-proof exam; the written answers carry the independent-work weight.</p>
+  </section>
+
+  <footer class="note">
+    <p>All the math happens inside this page, in your browser. The page sends nothing over the internet, and once loaded it works offline. Your name and answers stay on your computer unless you download the Excel file and hand it in.</p>
+    <p>The company, people and numbers in this lab are made up for practice. The stablecoins, laws and events described are real; check the linked sources for the latest.</p>
+    <p><strong>Free and open-source software</strong>, MIT License.</p>
+  </footer>
+</main>
+
+<script>
+"use strict";
+/* ============ COURSE SETTINGS: fill these in once; every student sees them. Leave "" to let students type it. ============ */
+const COURSE = {
+  title:      "Stablecoin Lab: Know It, Design It, Use It, Stress It, Book It",
+  department: "Hutton & Plaster School of Business",
+  university: "University of the Cumberlands",
+  course:     "BLCN 533: Finance and Blockchain",
+  instructor: "Dr. Michael Tabone",
+  // SHA-256 of the instructor passcode. The tools appear when the page address ends in ?instructor
+  instructorKeyHash: "d8b8cade113529a44f9af595e86394603d9cf392ffeb2f3fb8915d6e0581e31b",
+};
+/* ==================================================================================================================== */
+const $ = id => document.getElementById(id);
+const DATA_TAG = "STABLECOIN_LAB_DATA_V1";
+
+/* ---------------- SHA-256 (FIPS 180-4), plain JavaScript so it works offline ---------------- */
+const K256 = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+function sha256(msg) {
+  const len = msg.length, total = Math.ceil((len + 9) / 64) * 64;
+  const buf = new Uint8Array(total); buf.set(msg); buf[len] = 0x80;
+  const bitLen = len * 8, dv = new DataView(buf.buffer);
+  dv.setUint32(total - 8, Math.floor(bitLen / 4294967296)); dv.setUint32(total - 4, bitLen >>> 0);
+  const H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+  const W = new Uint32Array(64);
+  const r = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let off = 0; off < total; off += 64) {
+    for (let t = 0; t < 16; t++) W[t] = dv.getUint32(off + t * 4);
+    for (let t = 16; t < 64; t++) {
+      const s0 = r(W[t-15], 7) ^ r(W[t-15], 18) ^ (W[t-15] >>> 3);
+      const s1 = r(W[t-2], 17) ^ r(W[t-2], 19) ^ (W[t-2] >>> 10);
+      W[t] = (W[t-16] + s0 + W[t-7] + s1) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let t = 0; t < 64; t++) {
+      const T1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K256[t] + W[t]) >>> 0;
+      const T2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      h = g; g = f; f = e; e = (d + T1) >>> 0; d = c; c = b; b = a; a = (T1 + T2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  const out = new Uint8Array(32); const ov = new DataView(out.buffer);
+  for (let i = 0; i < 8; i++) ov.setUint32(i * 4, H[i]);
+  return out;
+}
+const toHex = bytes => Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+const enc = new TextEncoder();
+const hashHex = s => toHex(sha256(enc.encode(s)));
+
+/* ---------------- each student's numbers come from their name ---------------- */
+const normName = s => s.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
+let SEED = "";
+function rand(label) {                         // 0 <= x < 1, the same every time for the same name and label
+  const h = sha256(enc.encode(SEED + "|" + label));
+  return (((h[0] << 24) | (h[1] << 16) | (h[2] << 8) | h[3]) >>> 0) / 4294967296;
+}
+function between(label, min, max, step = 1) {   // a number from min to max in steps, rounded cleanly
+  const n = Math.round((max - min) / step) + 1;
+  const v = min + Math.floor(rand(label) * n) * step;
+  return Math.round(v * 1e6) / 1e6;
+}
+const pick = (label, arr) => arr[Math.floor(rand(label) * arr.length)];
+function shuffle(label, n) {                   // a seeded order of 0..n-1
+  const a = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(rand(label + "#" + i) * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const r2 = x => Math.round(x * 100) / 100;
+const fmt = (x, dec = 0) => Number(x).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+const money = (x, dec = 0) => (x < 0 ? "−" : "") + "$" + fmt(Math.abs(x), dec);
+function base58(hex) {
+  const A = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  let n = BigInt("0x" + hex), s = "";
+  while (n > 0n) { s = A[Number(n % 58n)] + s; n /= 58n; }
+  return s;
+}
+const hexFrom = (label, len) => { let s = ""; let i = 0; while (s.length < len) s += hashHex(SEED + "|" + label + "|" + i++); return s.slice(0, len); };
+
+let P = null;   // the student's numbers
+function makeParams() {
+  const p = {};
+  // Section 2
+  p.S2 = between("s2.supply", 20, 80, 1) * 1e6;
+  p.cov = between("s2.cov", 98.00, 103.00, 0.05);
+  p.R2 = Math.round(p.S2 * p.cov / 100);
+  p.c = between("s2.cash", 8, 20, 1);
+  p.y = between("s2.yield", 3.40, 4.60, 0.05);
+  p.w = p.c + between("s2.wave", 4, 15, 1);
+  // Section 3
+  p.A = between("s3.inv", 150, 450, 5) * 1000;
+  p.Fw = pick("s3.fw", [35, 40, 45, 50]);
+  p.Fh = between("s3.fh", 15, 30, 5);
+  p.h = between("s3.hops", 1, 2, 1);
+  p.sw = between("s3.sw", 1.00, 2.50, 0.05);
+  p.oi = between("s3.oi", 0.00, 0.15, 0.01);
+  p.so = between("s3.so", 0.20, 0.80, 0.05);
+  p.net = pick("s3.netw", ["Solana", "Base", "Ethereum"]);
+  if (p.net === "Solana") { p.tok = "SOL"; p.feeAmt = between("s3.fa", 5, 80, 1) * 1e-6; p.tokPx = between("s3.px", 120, 220, 1); }
+  else if (p.net === "Base") { p.tok = "ETH"; p.feeAmt = between("s3.fa", 2, 30, 1) * 1e-6; p.tokPx = between("s3.px", 2400, 4200, 10); }
+  else { p.tok = "ETH"; p.feeAmt = between("s3.fa", 12, 90, 1) * 1e-5; p.tokPx = between("s3.px", 2400, 4200, 10); }
+  p.feeAmt = Math.round(p.feeAmt * 1e8) / 1e8;
+  p.nf = p.feeAmt * p.tokPx;
+  p.d = between("s3.disc", 0.5, 1.5, 0.1);
+  p.dw = between("s3.days", 2, 4, 1);
+  p.G = between("s3.gross", 30, 90, 1) * 100;
+  p.wt = between("s3.wt", 12, 28, 1);
+  p.nA = between("s3.na", 200, 900, 10) * 1000;   // U.S. owes Mexico
+  p.nB = between("s3.nb", 150, 700, 10) * 1000;   // Mexico owes Canada
+  p.nC = between("s3.nc", 100, 600, 10) * 1000;   // Canada owes U.S.
+  p.nD = between("s3.nd", 50, 400, 10) * 1000;    // Mexico owes U.S.
+  if (p.net === "Solana") {     // Solana uses base58 addresses and 64-byte signatures, and counts "slots"
+    p.txHash = base58(hexFrom("s3.hash", 128)); p.fromAddr = base58(hexFrom("s3.from", 64)); p.toAddr = base58(hexFrom("s3.to", 64));
+    p.block = Math.floor(between("s3.block", 380000000, 420000000, 1));
+  } else {
+    p.txHash = "0x" + hexFrom("s3.hash", 64); p.fromAddr = "0x" + hexFrom("s3.from", 40); p.toAddr = "0x" + hexFrom("s3.to", 40);
+    p.block = Math.floor(between("s3.block", p.net === "Base" ? 36000000 : 23000000, p.net === "Base" ? 42000000 : 24500000, 1));
+  }
+  // Section 4
+  p.p = between("s4.p", 0.960, 0.995, 0.001);
+  p.N = between("s4.n", 5, 50, 1) * 10000;
+  p.rf = pick("s4.rf", [0, 0.05, 0.10]);
+  p.qq = between("s4.q", 1.003, 1.030, 0.001);
+  p.N2 = between("s4.n2", 5, 50, 1) * 10000;
+  p.Sx = between("s4.sx", 30, 60, 1) * 1e9;
+  p.bk = between("s4.bk", 5, 15, 1);
+  p.Hm = between("s4.hm", 2, 20, 1) * 100000;
+  p.p2 = between("s4.p2", 0.860, 0.950, 0.001);
+  p.E = between("s4.e", 50, 300, 10);
+  p.Px = between("s4.px", 2400, 4200, 50);
+  p.m = between("s4.m", 0.30, 0.50, 0.01);
+  p.D = Math.round(p.E * p.Px * p.m);
+  p.x = between("s4.x", 20, 45, 1);
+  p.U = between("s4.u", 5, 20, 1) * 1e8;
+  p.L1 = between("s4.l1", 60, 90, 1);
+  p.L2 = r2(p.L1 * between("s4.l2", 0.30, 0.60, 0.01));
+  // Section 5
+  p.B5 = Math.ceil(p.A / 10000) * 10000 + 10000;
+  p.F5 = between("s5.f", 20, 60, 5);
+  p.R5 = between("s5.r", 10, 50, 1) * 1000;
+  p.Hs = between("s5.hs", 2, 20, 1) * 10000;
+  p.p5 = between("s5.p", 0.900, 0.980, 0.001);
+  p.code = hashHex(SEED).slice(0, 8).toUpperCase();
+  return p;
+}
+
+/* ---------------- the questions ---------------- */
+const ACCOUNTS = ["Cash – bank account", "Stablecoin holdings (USDC)", "Crypto assets – network token", "Accounts payable", "Accounts receivable",
+  "Bank fees expense", "Purchase discounts", "Salaries expense", "Payroll tax withholding payable", "Realized loss on stablecoins", "Interest income", "Revenue"];
+const SECNAMES = { 1: "1. Know your stablecoins", 2: "2. Design your own", 3: "3. Pay with it", 4: "4. Stress test", 5: "5. Book it", 6: "6. Your call" };
+
+// kinds: num (number, checked), mc (multiple choice, checked), je (journal entry, checked), sel (design choice + why, not checked), text (written, not checked)
+const Q = [];
+const add = (q) => Q.push(q);
+
+/* Section 1 */
+add({ id: "1.1", sec: "1", kind: "mc", label: "Type: dollar reserves, redeem with issuer",
+  prompt: () => "A company holds $1 in cash and 3-month Treasury bills for every coin, and you can cash out with that company at $1. What type is it?",
+  opts: ["Fiat-backed", "Crypto-backed", "Algorithmic", "Commodity-backed"], correct: 0,
+  hint: "Who holds the reserves, and what are they? Cash and T-bills held by a company point to one type." });
+add({ id: "1.2", sec: "1", kind: "mc", label: "Type: $150 of ETH for 100 coins",
+  prompt: () => "You lock $150 of ETH in a smart contract and receive 100 coins. If ETH falls too far, the contract sells your ETH automatically. What type is it?",
+  opts: ["Crypto-backed", "Fiat-backed", "Hybrid", "Government-issued"], correct: 0,
+  hint: "The collateral is crypto, and it's worth more than the coins. Re-read Type 2." });
+add({ id: "1.4", sec: "1", kind: "mc", label: "Type: no reserves, sister token",
+  prompt: () => "There are no reserves. When the coin trades below $1, you can burn it and receive $1 worth of a newly created sister token. What type is it?",
+  opts: ["Algorithmic", "Crypto-backed", "Fiat-backed", "Bank deposit token"], correct: 0,
+  hint: "No reserves at all, and code manages the supply. Re-read Type 4." });
+add({ id: "1.7", sec: "1", kind: "mc", label: "Who can freeze one customer's coins",
+  prompt: () => "Which design usually gives a company the power to freeze one specific customer's coins?",
+  opts: ["A fiat-backed coin whose issuer holds an admin key in the smart contract", "A crypto-backed coin like DAI, where code runs the vaults", "Any coin, because every blockchain lets banks freeze accounts", "None; tokens can never be frozen"], correct: 0,
+  hint: "Freezing is a rule in the smart contract, and someone has to hold the key that triggers it." });
+add({ id: "1.8", sec: "1", kind: "mc", label: "DAI vs. Terra: the key difference",
+  prompt: () => "DAI and TerraUSD both relied on code to manage their peg. What's the key difference that let DAI keep working?",
+  opts: ["Every DAI is backed by collateral worth more than the coins; UST redeemed into a token whose value depended on confidence in the same system",
+         "DAI is run by a bank, and UST was run by code",
+         "DAI never trades on exchanges, so its price can't move",
+         "There is no real difference; DAI was just lucky"], correct: 0,
+  hint: "Think about what you get when the system has to pay out: an asset from outside the system, or a newly created token from inside it." });
+add({ id: "1.10", sec: "1", kind: "mc", label: "Gold, synthetic and state-issued types",
+  prompt: () => "Which statement correctly describes all three of these: PAX Gold, Ethena's USDe and Wyoming's FRNT?",
+  opts: ["PAX Gold tracks the price of gold, not the dollar; USDe holds crypto plus an equal short position; FRNT is issued by a state and backed by cash and Treasuries",
+         "All three are fiat-backed coins that always stay at exactly $1",
+         "PAX Gold is algorithmic; USDe is backed by gold; FRNT is backed by crypto in vaults",
+         "PAX Gold and FRNT are bank deposit tokens; USDe is backed by Treasury bills"], correct: 0,
+  hint: "Re-read Types 3, 5 and 6." });
+
+/* Section 2 */
+add({ id: "2.1", sec: "2a", kind: "sel", label: "Design: backing",
+  prompt: () => "What will back MapleUSD?",
+  opts: ["100% cash and Treasury bills (fiat-backed)", "Mostly Treasury bills with a larger cash cushion than required", "Crypto collateral in smart-contract vaults", "Partly backed, partly algorithmic"] });
+add({ id: "2.2", sec: "2a", kind: "sel", label: "Design: network",
+  prompt: () => "Which blockchain will MapleUSD launch on?",
+  opts: ["Ethereum (most secure and widely used, higher fees)", "Solana (very fast and cheap, has had outages)", "Base or another Layer 2 (cheap, settles back to Ethereum)", "Several networks at once", "A private, permissioned blockchain run by Maple and its banks"] });
+add({ id: "2.3", sec: "2a", kind: "sel", label: "Design: who can redeem",
+  prompt: () => "Who can redeem MapleUSD directly with Maple for $1?",
+  opts: ["Anyone holding the coin, with no minimum", "Verified business customers only, with a $10,000 minimum", "Verified business customers only, with a small fee", "Only Maple's dealers"] });
+add({ id: "2.4", sec: "2a", kind: "sel", label: "Design: admin key",
+  prompt: () => "Who controls the admin key that can mint, burn and freeze?",
+  opts: ["One key held by the treasurer", "A multi-signature key: 3 of 5 executives must approve", "A regulated custodian holds the key for Maple", "No freeze function at all"] });
+add({ id: "2.5", sec: "2b", kind: "num", label: "Coverage ratio (%)", unit: "%", dec: 2,
+  prompt: p => `MapleUSD has <strong>${money(p.S2)}</strong> of coins outstanding and <strong>${money(p.R2)}</strong> in reserves. What's the coverage ratio? Give a percent to 2 decimal places.`,
+  ans: p => p.R2 / p.S2 * 100, tol: () => 0.006,
+  hint: "Divide reserves by coins outstanding, then multiply by 100. Don't type the % sign if it gives you trouble." });
+add({ id: "2.6", sec: "2b", kind: "num", label: "Surplus (+) or shortfall (−)", unit: "$", dec: 0,
+  prompt: p => `How many dollars is MapleUSD over or under 1-to-1 backing? Type a positive number for a surplus, or a negative number (with a minus sign) for a shortfall. Round to the nearest dollar.`,
+  ans: p => p.R2 - p.S2, tol: () => 1,
+  hint: "Reserves minus coins outstanding. If the reserves are smaller, the answer is negative." });
+add({ id: "2.7", sec: "2c", kind: "num", label: "Issuer's annual interest", unit: "$", dec: 0,
+  prompt: p => `For the rest of Section 2, assume reserves equal coins outstanding: <strong>${money(p.S2)}</strong>. Maple keeps <strong>${p.c}%</strong> as cash (earns nothing) and the rest in T-bills earning <strong>${fmt(p.y, 2)}%</strong> a year. How much interest does Maple earn in a year? Round to the nearest dollar.`,
+  ans: p => p.S2 * (1 - p.c / 100) * p.y / 100, tol: p => Math.max(1, p.S2 * (1 - p.c / 100) * p.y / 100 * 0.0002),
+  hint: "Only the T-bill share earns interest. T-bill share = 100% minus the cash share. Then multiply by the interest rate as a decimal." });
+add({ id: "2.9", sec: "2c", kind: "mc", label: "Interest paid to holders",
+  prompt: () => "Under the GENIUS Act, how much interest can Maple pay its coin holders just for holding MapleUSD?",
+  opts: ["None; issuers can't pay interest or yield for simply holding the coin", "The same rate the T-bills earn", "Half the T-bill rate", "Whatever Maple chooses"], correct: 0,
+  hint: "Re-read the business model in the blue box at the top of Section 2, then the rules in 2F." });
+add({ id: "2.10", sec: "2d", kind: "num", label: "Redemption requests ($)", unit: "$", dec: 0,
+  prompt: p => `Bad news hits and holders ask to redeem <strong>${p.w}%</strong> of all <strong>${money(p.S2)}</strong> of MapleUSD in one day. How many dollars of redemptions is that? Round to the nearest dollar.`,
+  ans: p => p.S2 * p.w / 100, tol: () => 1,
+  hint: "Coins outstanding times the redemption percentage as a decimal." });
+add({ id: "2.11", sec: "2d", kind: "num", label: "Paid the same day ($)", unit: "$", dec: 0,
+  prompt: p => `With <strong>${p.c}%</strong> of reserves in cash, how many dollars can Maple pay out today?`,
+  ans: p => Math.min(p.S2 * p.c / 100, p.S2 * p.w / 100), tol: () => 1,
+  hint: "Only cash can be paid today. Cash = coins outstanding times the cash share." });
+add({ id: "2.12", sec: "2d", kind: "num", label: "Waiting until tomorrow ($)", unit: "$", dec: 0,
+  prompt: () => `How many dollars of redemptions have to wait until tomorrow?`,
+  ans: p => Math.max(0, p.S2 * (p.w - p.c) / 100), tol: () => 1,
+  hint: "Requests minus what you paid today." });
+add({ id: "2.14", sec: "2e", kind: "num", label: "Line that increases total supply", unit: "line", dec: 0,
+  prompt: () => `Which line number increases the total number of MapleUSD coins that exist?`,
+  ans: () => CODE.lineMint, tol: () => 0,
+  hint: "Look for the line that changes totalSupply inside the function that only the issuer can call to create coins." });
+add({ id: "2.15", sec: "2e", kind: "num", label: "Line that blocks frozen senders", unit: "line", dec: 0,
+  prompt: () => `Which line number stops a frozen account from sending coins?`,
+  ans: () => CODE.lineFrozen, tol: () => 0,
+  hint: "Look inside the transfer function for the line that checks frozen[...] and stops if it's true." });
+add({ id: "2.16", sec: "2e", kind: "mc", label: "Who can call mint",
+  prompt: () => "Who can call the mint function?",
+  opts: ["Only the address holding the issuerAdmin key (the onlyIssuer gate)", "Anyone who holds MapleUSD", "Any Maple employee", "Anyone who pays the network fee"], correct: 0,
+  hint: "Look at the word right after mint(...) and what that word means near the top of the contract." });
+add({ id: "2.17", sec: "2e", kind: "mc", label: "If the admin key is stolen",
+  prompt: () => "If a thief stole a single-person issuerAdmin key, what could they do?",
+  opts: ["Mint coins with no reserves behind them and freeze other people's accounts", "Nothing, because the blockchain would reject them", "Only read balances", "Only change the coin's name"], correct: 0,
+  hint: "Whatever the key holder can do, the thief can now do too." });
+add({ id: "2.18", sec: "2f", kind: "mc", label: "Allowed reserve asset",
+  prompt: () => "Which of these can count toward MapleUSD's reserves under the GENIUS Act?",
+  opts: ["A U.S. Treasury bill that matures in 60 days", "Bitcoin", "Maple's own corporate bonds", "A warehouse Maple owns"], correct: 0,
+  hint: "Reserves are limited to cash, deposits and very short-term government securities." });
+add({ id: "2.20", sec: "2f", kind: "mc", label: "Can Maple (public company) issue",
+  prompt: () => "Maple is a public company that isn't mainly in the financial business. What does it need to issue MapleUSD itself?",
+  opts: ["A unanimous vote of the Stablecoin Certification Review Committee", "Nothing; any company can issue", "Only a state business license", "Only approval from Maple's board"], correct: 0,
+  hint: "Re-read the \"Who can issue\" bullet in 2F. Many companies partner with an existing issuer instead, as PayPal did with Paxos." });
+add({ id: "2.21", sec: "2f", kind: "text", label: "Written: launch MapleUSD or use an existing coin?",
+  prompt: p => `Should Maple launch MapleUSD, or use an existing coin like USDC? Use at least two numbers you worked out above (for example, the ${money(p.S2 * (1 - p.c / 100) * p.y / 100)} in yearly interest, or the redemption gap) and at least one rule from 2F.` });
+
+/* Section 3 */
+add({ id: "3.1", sec: "3a", kind: "num", label: "Total wire cost", unit: "$", dec: 2,
+  prompt: p => `Maple owes its supplier, Aceros del Norte in Monterrey, <strong>${money(p.A)}</strong>.<br>
+    <strong>Wire:</strong> ${money(p.Fw)} bank fee, ${p.h} correspondent bank${p.h > 1 ? "s" : ""} charging ${money(p.Fh)} each, FX spread ${fmt(p.sw, 2)}%. It arrives in ${p.dw} business days.<br>
+    What's the total cost of the wire? Round to the cent.`,
+  ans: p => p.Fw + p.Fh * p.h + p.A * p.sw / 100, tol: () => 0.02,
+  hint: "Add the bank fee, the correspondent fee times the number of correspondent banks, and the invoice times the FX spread as a decimal (for example, 1.50% = 0.015)." });
+add({ id: "3.2", sec: "3a", kind: "num", label: "Total stablecoin cost", unit: "$", dec: 2,
+  prompt: p => `<strong>Stablecoin:</strong> ${fmt(p.oi, 2)}% conversion fee, ${money(p.nf, 4)} network fee on ${p.net}, and the supplier's off-ramp spread is ${fmt(p.so, 2)}%. It settles in seconds.<br>
+    What's the total cost of the stablecoin payment? Round to the cent.`,
+  ans: p => p.A * p.oi / 100 + p.nf + p.A * p.so / 100, tol: () => 0.02,
+  hint: "Invoice times the conversion fee as a decimal, plus the network fee, plus invoice times the off-ramp spread as a decimal." });
+add({ id: "3.3", sec: "3a", kind: "num", label: "Savings with stablecoin", unit: "$", dec: 2,
+  prompt: () => `How much does the stablecoin payment save compared with the wire? Round to the cent.`,
+  ans: p => (p.Fw + p.Fh * p.h + p.A * p.sw / 100) - (p.A * p.oi / 100 + p.nf + p.A * p.so / 100), tol: () => 0.03,
+  hint: "Wire cost minus stablecoin cost." });
+add({ id: "3.5", sec: "3a", kind: "num", label: "Early-payment discount captured", unit: "$", dec: 2,
+  prompt: p => `Aceros offers <strong>${fmt(p.d, 1)}%</strong> off if paid within 24 hours. The wire takes ${p.dw} days, so only the stablecoin payment can get it. How many dollars is the discount worth? Round to the cent.`,
+  ans: p => p.A * p.d / 100, tol: () => 0.02,
+  hint: "Invoice times the discount as a decimal." });
+add({ id: "3.6", sec: "3b", kind: "num", label: "Network fee in USD (from explorer)", unit: "$", dec: 4,
+  prompt: () => `Look at the explorer above. What was the network fee in U.S. dollars? Give 4 decimal places.`,
+  ans: p => p.nf, tol: p => Math.max(0.00011, p.nf * 0.005),
+  hint: "Multiply the fee (in the network's own coin) by that coin's price, shown in the same row." });
+add({ id: "3.7", sec: "3b", kind: "mc", label: "What 'Finalized' means",
+  prompt: () => "The status says Finalized. What does that mean for Maple's treasury team?",
+  opts: ["The transfer is complete on the blockchain and the network won't reverse it; Aceros now holds the USDC", "The payment is waiting for a bank to approve it", "The payment will settle at the end of the business day", "Maple can cancel it within 24 hours"], correct: 0,
+  hint: "Re-read the purple box: what does finality mean?" });
+add({ id: "3.8", sec: "3b", kind: "mc", label: "Who can see the payment",
+  prompt: () => "Who can see this payment's amount and the two addresses?",
+  opts: ["Anyone in the world who looks it up on a block explorer", "Only Maple and Aceros", "Only the stablecoin issuer", "Only regulators"], correct: 0,
+  hint: "A block explorer is a public website." });
+add({ id: "3.9", sec: "3c", kind: "num", label: "Net pay to worker", unit: "$", dec: 2,
+  prompt: p => `A Maple engineer's gross pay is <strong>${money(p.G)}</strong> and the withholding rate is <strong>${p.wt}%</strong>. How much does the smart contract send to the engineer? Round to the cent.`,
+  ans: p => p.G * (1 - p.wt / 100), tol: () => 0.01,
+  hint: "Net pay = gross pay minus withholding. Withholding = gross pay times the rate as a decimal." });
+add({ id: "3.10", sec: "3c", kind: "num", label: "Withholding to tax authority", unit: "$", dec: 2,
+  prompt: () => `How much does it send to the tax authority in the same transaction? Round to the cent.`,
+  ans: p => p.G * p.wt / 100, tol: () => 0.01,
+  hint: "Gross pay times the withholding rate as a decimal." });
+add({ id: "3.11", sec: "3d", kind: "num", label: "Mexico office net position", unit: "$", dec: 0,
+  prompt: p => `This month: the U.S. office owes Mexico <strong>${money(p.nA)}</strong>. Mexico owes Canada <strong>${money(p.nB)}</strong>. Canada owes the U.S. <strong>${money(p.nC)}</strong>. Mexico also owes the U.S. <strong>${money(p.nD)}</strong>.<br>
+    What is the Mexico office's net position? Use a minus sign if Mexico pays.`,
+  ans: p => p.nA - p.nB - p.nD, tol: () => 1,
+  hint: "Mexico is owed one amount (from the U.S.) and owes two amounts (to Canada and to the U.S.). Owed minus owes." });
+add({ id: "3.13", sec: "3d", kind: "text", label: "Written: move Aceros to a stablecoin rail?",
+  prompt: () => "Would you move Aceros del Norte to a stablecoin rail today? Use your numbers from 3A. The comparison there counts only fees, the FX spread and the discount, so name at least one cost or risk it leaves out (for example, on compliance, custody, the supplier's side or the coin itself) and say whether it could change your answer." });
+
+/* Section 4 */
+add({ id: "4.1", sec: "4a", kind: "num", label: "Arbitrage profit below $1", unit: "$", dec: 2,
+  prompt: p => `A stablecoin trades at <strong>$${fmt(p.p, 3)}</strong>. A trader buys <strong>${fmt(p.N)}</strong> coins and redeems them with the issuer at $1. The redemption fee is <strong>${fmt(p.rf, 2)}%</strong>. What's the trader's profit? Round to the cent.`,
+  ans: p => p.N * (1 - p.p) - p.N * p.rf / 100, tol: () => 0.02,
+  hint: "Coins times (1 − price), minus coins times the fee as a decimal (0.05% = 0.0005)." });
+add({ id: "4.2", sec: "4a", kind: "num", label: "Arbitrage profit above $1", unit: "$", dec: 2,
+  prompt: p => `Now the coin trades at <strong>$${fmt(p.qq, 3)}</strong>. A trader mints <strong>${fmt(p.N2)}</strong> new coins at $1 and sells them. What's the profit? Round to the cent.`,
+  ans: p => p.N2 * (p.qq - 1), tol: () => 0.02,
+  hint: "Coins times (price − 1)." });
+add({ id: "4.4", sec: "4b", kind: "num", label: "Reserves stuck at failed bank", unit: "$", dec: 0,
+  prompt: p => `A fiat-backed coin has <strong>${money(p.Sx)}</strong> outstanding. <strong>${p.bk}%</strong> of its reserves are at a bank that fails on a Friday. How many dollars of reserves are stuck?`,
+  ans: p => p.Sx * p.bk / 100, tol: p => Math.max(1, p.Sx * p.bk / 100 * 1e-6),
+  hint: "Coins outstanding times the share at the failed bank as a decimal." });
+add({ id: "4.5", sec: "4b", kind: "mc", label: "Why the price falls",
+  prompt: p => `The other ${100 - p.bk}% of the reserves are safe. So why can the price still fall well below $1 over the weekend?`,
+  opts: ["Redemptions slow down, so the arbitrage loop that pulls the price back to $1 stops working until they resume", "The issuer lowers the price on purpose", "The blockchain stops working on weekends", "Because the coin is algorithmic"], correct: 0,
+  hint: "What does a trader need to be able to do for the loop in 4A to work?" });
+add({ id: "4.6", sec: "4b", kind: "num", label: "Loss if Maple sells during the depeg", unit: "$", dec: 2,
+  prompt: p => `Maple holds <strong>${fmt(p.Hm)}</strong> of these coins and needs cash for Monday's payroll. If it sells on an exchange at <strong>$${fmt(p.p2, 3)}</strong>, how much does it lose compared with $1? Round to the cent.`,
+  ans: p => p.Hm * (1 - p.p2), tol: () => 0.02,
+  hint: "Coins times (1 − price)." });
+add({ id: "4.7", sec: "4b", kind: "text", label: "Written: sell, wait, or something else?",
+  prompt: () => "Would you sell now, wait for redemptions to resume, or do something else (like drawing on a bank credit line)? Explain the trade-off, and say what Maple could set up ahead of time so it's never forced to choose." });
+add({ id: "4.8", sec: "4c", kind: "num", label: "Collateral value", unit: "$", dec: 0,
+  prompt: p => `Maple locks <strong>${fmt(p.E)} ETH</strong> in a vault. ETH is <strong>${money(p.Px)}</strong>. What's the collateral worth?`,
+  ans: p => p.E * p.Px, tol: () => 1,
+  hint: "Amount of ETH times its price." });
+add({ id: "4.10", sec: "4c", kind: "num", label: "Liquidation price per ETH", unit: "$", dec: 2,
+  prompt: p => `To be safe, Maple mints only <strong>${fmt(p.D)}</strong> coins. At what ETH price would the vault be liquidated? Round to the cent.`,
+  ans: p => p.D * 1.5 / p.E, tol: () => 0.02,
+  hint: "Coins minted times 1.5, divided by the amount of ETH." });
+add({ id: "4.11", sec: "4c", kind: "num", label: "New collateral ratio after ETH drop", unit: "%", dec: 2,
+  prompt: p => `ETH falls <strong>${p.x}%</strong>. What's the vault's new collateral ratio? Give a percent to 2 decimal places.`,
+  ans: p => p.E * p.Px * (1 - p.x / 100) / p.D * 100, tol: () => 0.006,
+  hint: "New collateral value = old value times (1 − drop as a decimal). Then divide by coins minted and multiply by 100." });
+add({ id: "4.12", sec: "4c", kind: "mc", label: "Liquidated?",
+  prompt: () => "Is Maple's vault liquidated?",
+  opts: ["Yes, because the ratio is below 150%", "No, because the ratio is still at or above 150%"], correct: p => (p.E * p.Px * (1 - p.x / 100) / p.D * 100 < 150 ? 0 : 1), fixedOrder: true,
+  hint: "Compare your answer above with 150%." });
+add({ id: "4.13", sec: "4c", kind: "mc", label: "Bad price feed",
+  prompt: () => "A glitch makes the oracle report ETH 30% lower than its real price for one minute. What could happen?",
+  opts: ["Vaults could be liquidated even though the real ETH price never fell", "Nothing; smart contracts check prices with a human first", "The stablecoin's price would rise to $1.30", "The blockchain would pause until the glitch is fixed"], correct: 0,
+  hint: "The contract only knows what the oracle tells it." });
+add({ id: "4.14", sec: "4d", kind: "num", label: "LUNA minted on day 1 (millions)", unit: "million", dec: 2,
+  prompt: p => `Day 1: traders burn <strong>${money(p.U)}</strong> of UST when LUNA is <strong>${money(p.L1, 2)}</strong>. How many LUNA are minted? Answer in millions, to 2 decimal places (for example, 6,250,000 = 6.25).`,
+  ans: p => p.U / p.L1 / 1e6, tol: () => 0.006,
+  hint: "Dollars burned divided by the LUNA price. Then divide by 1,000,000 to get millions." });
+add({ id: "4.15", sec: "4d", kind: "num", label: "LUNA minted on day 2 (millions)", unit: "million", dec: 2,
+  prompt: p => `Day 2: the same <strong>${money(p.U)}</strong> is burned, but LUNA has fallen to <strong>${money(p.L2, 2)}</strong>. How many LUNA are minted now, in millions?`,
+  ans: p => p.U / p.L2 / 1e6, tol: () => 0.006,
+  hint: "Same formula with the new, lower price." });
+add({ id: "4.16", sec: "4d", kind: "mc", label: "What later designs changed",
+  prompt: () => "After Terra, what did several dollar-coin designs change?",
+  opts: ["They added real backing (Frax moved to full collateral) or hedged positions (synthetic dollars) instead of relying only on a sister token",
+         "They removed all collateral to be more efficient", "They stopped using smart contracts", "Nothing changed"], correct: 0,
+  hint: "Re-read Type 5 in Section 1." });
+
+/* Section 5 */
+add({ id: "5.1", sec: "5", kind: "je", label: "JE1: buy USDC with a wire",
+  prompt: p => `<strong>Entry 1.</strong> Maple wires <strong>${money(p.B5)}</strong> from its bank account to the issuer and receives ${fmt(p.B5)} USDC. The bank charges a <strong>${money(p.F5)}</strong> wire fee, also taken from the bank account.`,
+  lines: p => [{ a: "Stablecoin holdings (USDC)", dr: p.B5 }, { a: "Bank fees expense", dr: p.F5 }, { a: "Cash – bank account", cr: p.B5 + p.F5 }],
+  hint: "Two things go up (an asset and an expense) and one asset goes down by the total that left the bank." });
+add({ id: "5.2", sec: "5", kind: "je", label: "JE2: pay supplier with discount",
+  prompt: p => `<strong>Entry 2.</strong> Maple pays Aceros's <strong>${money(p.A)}</strong> invoice (already recorded in Accounts payable) in USDC within 24 hours and takes the <strong>${fmt(p.d, 1)}%</strong> early-payment discount.`,
+  lines: p => [{ a: "Accounts payable", dr: p.A }, { a: "Stablecoin holdings (USDC)", cr: r2(p.A * (1 - p.d / 100)) }, { a: "Purchase discounts", cr: r2(p.A * p.d / 100) }],
+  hint: "The whole payable goes away (debit). Maple only sends the invoice minus the discount in USDC (credit), and the discount is recorded on its own line (credit)." });
+add({ id: "5.3", sec: "5", kind: "je", label: "JE3: smart-contract payroll",
+  prompt: p => `<strong>Entry 3 (hypothetical).</strong> U.S. tax authorities don't currently accept payroll taxes in stablecoins, so this entry imagines how programmable payroll <em>could</em> work. The smart contract pays the engineer's <strong>${money(p.G)}</strong> gross pay in USDC: net pay to the engineer and ${p.wt}% withholding straight to the tax authority, in the same transaction. Because the withholding is sent at the same moment, no withholding liability is left on Maple's books. (Today, a company records a withholding liability and pays it off later.)`,
+  lines: p => [{ a: "Salaries expense", dr: p.G }, { a: "Stablecoin holdings (USDC)", cr: p.G }],
+  hint: "The full gross pay is the expense. All of it left Maple's USDC in one transaction, so there's nothing left owing." });
+add({ id: "5.5", sec: "5", kind: "je", label: "JE5: sell during a depeg",
+  prompt: p => `<strong>Entry 5.</strong> During a depeg, Maple sells <strong>${fmt(p.Hs)}</strong> USDC on an exchange at <strong>$${fmt(p.p5, 3)}</strong> each, recorded at $1 each on its books. The cash goes to its bank account.`,
+  lines: p => [{ a: "Cash – bank account", dr: r2(p.Hs * p.p5) }, { a: "Realized loss on stablecoins", dr: r2(p.Hs * (1 - p.p5)) }, { a: "Stablecoin holdings (USDC)", cr: p.Hs }],
+  hint: "The USDC leaves the books at $1 each (credit). Cash comes in at the sale price (debit). The difference is a loss (debit)." });
+add({ id: "5.6", sec: "5", kind: "mc", label: "Why stablecoins sit outside ASU 2023-08",
+  prompt: () => "Why do most fiat-backed stablecoins fall outside FASB's fair-value crypto rule (ASU 2023-08)?",
+  opts: ["They give the holder a right to redeem them for dollars, and the rule covers only crypto without such rights", "They aren't recorded on a blockchain", "They're always counted as cash", "FASB hasn't heard of them"], correct: 0,
+  hint: "Re-read the second paragraph in the blue box at the top of Section 5." });
+add({ id: "5.7", sec: "5", kind: "mc", label: "Which could be a cash equivalent (proposal)",
+  prompt: () => "Under FASB's August 2026 proposal, which coin is most likely to count as a cash equivalent?",
+  opts: ["A coin you can redeem on demand with the issuer at $1, backed 1-to-1 by separate short-term, liquid reserves",
+         "A coin you can only sell on crypto exchanges", "DAI, which has no issuer you can redeem with", "An algorithmic coin with no reserves"], correct: 0,
+  hint: "Check each option against the three tests in the blue box." });
+
+/* Section 6 */
+add({ id: "6.1", sec: "6", kind: "text", label: "Written: CFO recommendation",
+  prompt: () => "Maple's CFO asks: <em>Should we move our cross-border supplier payments from wires to a stablecoin rail now, before the GENIUS Act takes effect on January 18, 2027, or wait?</em> Take a clear position in your first sentence. Support it with (1) at least two numbers from this lab, (2) the mechanism of the stablecoin type you'd use, including how it could fail, and (3) how the rules or the accounting affect your answer." });
+
+const QBYID = Object.fromEntries(Q.map(q => [q.id, q]));
+{ const cnt = {}; for (const q of Q) { const k = q.sec[0]; cnt[k] = (cnt[k] || 0) + 1; q.n = k + "." + cnt[k]; } }   // numbers shown to students run 1.1, 1.2, ... with no gaps
+const CHECKED = Q.filter(q => ["num", "mc", "je"].includes(q.kind));
+
+/* ---------------- the contract shown in 2E (its order is shuffled per student) ---------------- */
+let CODE = { lines: [], lineMint: 0, lineFrozen: 0 };
+function buildCode() {
+  const head = [
+    "contract MapleUSD {",
+    "    address issuerAdmin;               // the key that controls minting, burning and freezing",
+    "    uint totalSupply;                  // how many coins exist",
+    "    mapping(address => uint) balance;  // how many coins each account holds",
+    "    mapping(address => bool) frozen;   // accounts the issuer has frozen",
+    "    modifier onlyIssuer { require(msg.sender == issuerAdmin); _; }  // a gate: only the admin key gets through",
+  ];
+  const blocks = [
+    ["    function mint(address to, uint amount) onlyIssuer {   // the issuer creates coins after a customer wires in dollars",
+     "        balance[to] += amount;        // add coins to the customer's account",
+     "        totalSupply += amount;        //@MINT more coins now exist",
+     "    }"],
+    ["    function burn(address from, uint amount) onlyIssuer {   // called when a customer redeems coins for dollars",
+     "        balance[from] -= amount;      // take the coins away",
+     "        totalSupply -= amount;        // fewer coins now exist",
+     "    }"],
+    ["    function freeze(address account) onlyIssuer {   // for example, after a court order",
+     "        frozen[account] = true;       // this account can no longer send coins",
+     "    }"],
+    ["    function transfer(address to, uint amount) {   // anyone can call this to send coins",
+     "        require(!frozen[msg.sender]);           //@FROZEN stop here if the sender is frozen",
+     "        require(balance[msg.sender] >= amount); // stop here if the sender doesn't have enough",
+     "        balance[msg.sender] -= amount;",
+     "        balance[to] += amount;",
+     "    }"],
+  ];
+  const order = shuffle("s2.code", blocks.length);
+  const lines = [...head];
+  for (const i of order) { lines.push(""); lines.push(...blocks[i]); }
+  lines.push("}");
+  CODE = { lines: [], lineMint: 0, lineFrozen: 0 };
+  lines.forEach((l, i) => {
+    if (l.includes("//@MINT")) CODE.lineMint = i + 1;
+    if (l.includes("//@FROZEN")) CODE.lineFrozen = i + 1;
+    CODE.lines.push(l.replace("//@MINT ", "// ").replace("//@FROZEN ", "// "));
+  });
+}
+const escHtml = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function codeHtml() {
+  return '<pre class="code" aria-label="MapleUSD smart contract">' + CODE.lines.map((l, i) => {
+    const k = l.indexOf("//");
+    const body = k >= 0 ? escHtml(l.slice(0, k)) + '<span class="cm">' + escHtml(l.slice(k)) + "</span>" : escHtml(l);
+    return `<span class="ln">${i + 1}</span>${body}`;
+  }).join("\n") + "</pre>";
+}
+function explorerHtml(p) {
+  const t = new Date(Date.UTC(2026, 10, 3, 14, 6, 0) + Math.floor(rand("s3.time") * 86400 * 3) * 1000);
+  return `<div class="explorer" aria-label="Block explorer"><div class="bar">${p.net} explorer: transaction details</div><table>
+    <tr><td>${p.net === "Solana" ? "Transaction signature" : "Transaction hash"}</td><td class="h">${p.txHash}</td></tr>
+    <tr><td>Status</td><td><span class="badge">✓ Finalized</span></td></tr>
+    <tr><td>${p.net === "Solana" ? "Slot" : "Block"}</td><td class="mono">${fmt(p.block)}</td></tr>
+    <tr><td>Time (UTC)</td><td class="mono">${t.toISOString().replace("T", " ").slice(0, 19)}</td></tr>
+    <tr><td>From (Maple Supply)</td><td class="h">${p.fromAddr}</td></tr>
+    <tr><td>To (Aceros del Norte)</td><td class="h">${p.toAddr}</td></tr>
+    <tr><td>Token transferred</td><td class="mono">${fmt(p.A * (1 - p.d / 100), 2)} USDC</td></tr>
+    <tr><td>Network fee</td><td class="mono">${p.feeAmt.toFixed(8).replace(/0+$/, "")} ${p.tok} &nbsp;(${p.tok} price: ${money(p.tokPx, 2)})</td></tr>
+  </table></div>
+  <p class="note">This is a simulated explorer page: the transaction, addresses and numbers are made up for the lab and don't exist on a real blockchain, but it's laid out like the real ones.${p.net === "Solana" ? " On Solana, the transaction ID is called a signature and blocks are counted in slots." : ""} The amount sent is the invoice minus the early-payment discount from 3A.</p>`;
+}
+
+/* ---------------- state ---------------- */
+let started = false;
+const S = { ans: {}, tries: {}, lastWrong: {} };   // answers, wrong-try counts, last wrong answer per question
+let dirty = false;
+
+function correctMC(q) { return typeof q.correct === "function" ? q.correct(P) : q.correct; }
+function parseNum(s) {
+  if (s === undefined || s === null) return NaN;
+  const t = String(s).replace(/[$,\s%]/g, "").replace(/[−–]/g, "-");
+  if (t === "" || !/^-?\d*\.?\d+$/.test(t)) return NaN;
+  return parseFloat(t);
+}
+function jeCheck(q, rows) {    // rows: [{a, dr, cr}] strings
+  const want = q.lines(P).map(l => ({ a: l.a, dr: r2(l.dr || 0), cr: r2(l.cr || 0) }));
+  const got = (rows || []).filter(r => r && (r.a || r.dr || r.cr)).map(r => ({ a: r.a || "", dr: r2(parseNum(r.dr) || 0), cr: r2(parseNum(r.cr) || 0) }));
+  if (got.length !== want.length) return false;
+  const used = new Set();
+  for (const w of want) {
+    const i = got.findIndex((g, k) => !used.has(k) && g.a === w.a && Math.abs(g.dr - w.dr) < 0.015 && Math.abs(g.cr - w.cr) < 0.015);
+    if (i < 0) return false;
+    used.add(i);
+  }
+  return true;
+}
+function isRight(q, v = S.ans[q.id]) {
+  if (v === undefined || v === "" || v === null) return null;
+  if (q.kind === "num") { const n = parseNum(v); if (isNaN(n)) return false; return Math.abs(n - q.ans(P)) <= q.tol(P) + 1e-9; }
+  if (q.kind === "mc") return +v === correctMC(q);
+  if (q.kind === "je") { const rows = v; if (!rows.some(r => r && (r.a || r.dr || r.cr))) return null; return jeCheck(q, rows); }
+  return null;
+}
+const words = s => (String(s || "").trim().match(/\S+/g) || []).length;
+
+/* ---------------- rendering the questions ---------------- */
+function renderAll() {
+  document.querySelectorAll(".qlock").forEach(e => e.classList.toggle("hidden", started));
+  document.querySelectorAll(".qs").forEach(box => {
+    box.innerHTML = "";
+    if (!started) return;
+    const sec = box.dataset.sec;
+    if (sec === "2e") box.insertAdjacentHTML("beforeend", codeHtml());
+    if (sec === "3b") box.insertAdjacentHTML("beforeend", explorerHtml(P));
+    for (const q of Q.filter(q => q.sec === sec)) box.appendChild(renderQ(q));
+  });
+  refreshAll();
+}
+function renderQ(q) {
+  const d = document.createElement("div");
+  d.className = "q"; d.dataset.q = q.id;
+  let h = `<p class="prompt"><span class="qn">${q.n}</span>${q.prompt(P)}</p>`;
+  if (q.kind === "num") {
+    const pre = q.unit === "$" ? '<span class="unit">$</span>' : "";
+    const post = q.unit && q.unit !== "$" ? `<span class="unit">${q.unit}</span>` : "";
+    h += `<div class="row">${pre}<input class="num" inputmode="decimal" autocomplete="off" placeholder="Your answer" aria-label="Answer to ${q.n}">${post}<span class="res"></span></div>`;
+  } else if (q.kind === "mc") {
+    const order = q.fixedOrder ? q.opts.map((_, i) => i) : shuffle("mc." + q.id, q.opts.length);
+    h += '<div class="opts">' + order.map(i => `<label><input type="radio" name="mc${q.id}" value="${i}"><span>${q.opts[i]}</span></label>`).join("") + '</div><div class="res"></div>';
+  } else if (q.kind === "sel") {
+    h += `<div class="row"><select aria-label="${escHtml(q.label)}"><option value="">Choose one…</option>${q.opts.map((o, i) => `<option value="${i}">${escHtml(o)}</option>`).join("")}</select></div>
+      <textarea class="why-in" maxlength="1500" style="min-height:70px" placeholder="Explain your reasoning." aria-label="Why, for ${escHtml(q.label)}"></textarea>`;
+  } else if (q.kind === "text") {
+    h += `<textarea maxlength="6000" placeholder="Your answer" aria-label="Your answer to ${q.n}"></textarea>`;
+  } else if (q.kind === "je") {
+    const n = q.lines(P).length;
+    h += `<p class="small muted" style="margin:0 0 4px">This entry has ${n} lines.</p><div class="scroll"><table class="t je"><tr><th>Account</th><th>Debit ($)</th><th>Credit ($)</th></tr>` +
+      Array.from({ length: n }, (_, i) => `<tr data-row="${i}"><td><select aria-label="Line ${i + 1} account"><option value="">Choose an account…</option>${ACCOUNTS.map(a => `<option>${escHtml(a)}</option>`).join("")}</select></td>
+        <td><input class="dr" inputmode="decimal" autocomplete="off" aria-label="Line ${i + 1} debit"></td><td><input class="cr" inputmode="decimal" autocomplete="off" aria-label="Line ${i + 1} credit"></td></tr>`).join("") +
+      `<tr><td class="muted">Totals</td><td class="r tdr"></td><td class="r tcr"></td></tr></table></div><div class="res"></div>`;
+  }
+  if (q.hint) h += `<div class="hint">Hint: ${q.hint}</div>`;
+  d.innerHTML = h;
+  wireQ(q, d);
+  return d;
+}
+function wireQ(q, d) {
+  const v = S.ans[q.id];
+  if (q.kind === "num") {
+    const inp = d.querySelector("input");
+    if (v !== undefined) inp.value = v;
+    inp.addEventListener("input", () => { S.ans[q.id] = inp.value; dirty = true; refreshQ(q); refreshProgress(); });
+    inp.addEventListener("change", () => { countTry(q, inp.value.trim()); refreshQ(q); refreshProgress(); });
+  } else if (q.kind === "mc") {
+    d.querySelectorAll("input").forEach(r => {
+      if (v !== undefined && +r.value === +v) r.checked = true;
+      r.addEventListener("change", () => { S.ans[q.id] = r.value; dirty = true; countTry(q, r.value); refreshQ(q); refreshProgress(); });
+    });
+  } else if (q.kind === "sel") {
+    const sel = d.querySelector("select"), ta = d.querySelector("textarea");
+    if (v !== undefined) sel.value = v;
+    if (S.ans[q.id + "w"] !== undefined) ta.value = S.ans[q.id + "w"];
+    sel.addEventListener("change", () => { S.ans[q.id] = sel.value; dirty = true; refreshProgress(); });
+    ta.addEventListener("input", () => { S.ans[q.id + "w"] = ta.value; dirty = true; refreshQ(q); refreshProgress(); });
+  } else if (q.kind === "text") {
+    const ta = d.querySelector("textarea");
+    if (v !== undefined) ta.value = v;
+    ta.addEventListener("input", () => { S.ans[q.id] = ta.value; dirty = true; refreshQ(q); refreshProgress(); });
+  } else if (q.kind === "je") {
+    const rows = [...d.querySelectorAll("tr[data-row]")];
+    const read = () => rows.map(tr => ({ a: tr.querySelector("select").value, dr: tr.querySelector(".dr").value, cr: tr.querySelector(".cr").value }));
+    if (Array.isArray(v)) rows.forEach((tr, i) => { const r = v[i] || {}; tr.querySelector("select").value = r.a || ""; tr.querySelector(".dr").value = r.dr || ""; tr.querySelector(".cr").value = r.cr || ""; });
+    rows.forEach(tr => tr.querySelectorAll("select,input").forEach(el => {
+      el.addEventListener("input", () => { S.ans[q.id] = read(); dirty = true; refreshQ(q, true); refreshProgress(); });
+      el.addEventListener("change", () => { S.ans[q.id] = read(); const all = read().every(r => r.a && (r.dr || r.cr)); if (all) countTry(q, JSON.stringify(read())); refreshQ(q); refreshProgress(); });
+    }));
+  }
+}
+function countTry(q, val) {
+  if (val === "" || val === undefined) return;
+  const ok = isRight(q, q.kind === "je" ? JSON.parse(val) : val);
+  if (ok === false && S.lastWrong[q.id] !== val) { S.tries[q.id] = (S.tries[q.id] || 0) + 1; S.lastWrong[q.id] = val; dirty = true; }
+}
+function refreshQ(q, typing = false) {
+  const d = document.querySelector(`.q[data-q="${CSS.escape(q.id)}"]`);
+  if (!d) return;
+  const res = d.querySelector(".res"), hint = d.querySelector(".hint"), t = S.tries[q.id] || 0;
+  if (q.kind === "text" || q.kind === "sel") return;
+  if (q.kind === "je") {
+    const rows = S.ans[q.id] || [];
+    const sd = rows.reduce((a, r) => a + (parseNum(r.dr) || 0), 0), sc = rows.reduce((a, r) => a + (parseNum(r.cr) || 0), 0);
+    d.querySelector(".tdr").textContent = fmt(sd, 2); d.querySelector(".tcr").textContent = fmt(sc, 2);
+  }
+  const ok = isRight(q);
+  let msg = "";
+  if (ok === null) msg = "";
+  else if (ok) msg = '<span class="ok">✓ right</span>';
+  else if (q.kind === "je" && typing) msg = '<span class="muted">not balanced or not complete yet</span>';
+  else msg = '<span class="bad">✗ not yet, try again</span>';
+  if (t) msg += ` <span class="muted">(${t} wrong ${t === 1 ? "try" : "tries"})</span>`;
+  res.innerHTML = msg;
+  if (hint) hint.classList.toggle("show", !ok && t > 0);
+}
+function refreshAll() { if (started) Q.forEach(q => refreshQ(q)); refreshProgress(); }
+function sectionStats() {
+  const out = {};
+  for (const s of ["1", "2", "3", "4", "5", "6"]) {
+    const qs = Q.filter(q => q.sec[0] === s);
+    const ch = qs.filter(q => CHECKED.includes(q));
+    const wr = qs.filter(q => q.kind === "text" || q.kind === "sel");
+    out[s] = { right: ch.filter(q => isRight(q) === true).length, total: ch.length,
+      written: wr.filter(q => q.kind === "text" ? words(S.ans[q.id]) > 0 : (S.ans[q.id] !== undefined && S.ans[q.id] !== "" && words(S.ans[q.id + "w"]) > 0)).length, wtotal: wr.length,
+      tries: qs.reduce((a, q) => a + (S.tries[q.id] || 0), 0) };
+  }
+  return out;
+}
+function refreshProgress() {
+  if (!started) { $("progress").classList.add("hidden"); $("finalProgress").innerHTML = ""; return; }
+  const st = sectionStats();
+  const tr = Object.entries(st).map(([s, v]) => `<tr><td>${SECNAMES[s]}</td><td>${v.total ? `${v.right} of ${v.total} checked answers right` : ""}</td><td>${v.wtotal ? `${v.written} of ${v.wtotal} written answers filled in` : ""}</td></tr>`).join("");
+  const tot = Object.values(st).reduce((a, v) => [a[0] + v.right, a[1] + v.total, a[2] + v.tries], [0, 0, 0]);
+  const html = `<table>${tr}</table><p style="margin:6px 0 0"><strong>Total: ${tot[0]} of ${tot[1]} checked answers right</strong> · ${tot[2]} wrong ${tot[2] === 1 ? "try" : "tries"} · your student code: <span class="mono">${P.code}</span></p>`;
+  $("progress").innerHTML = html; $("progress").classList.remove("hidden");
+  $("finalProgress").innerHTML = html;
+}
+
+/* ---------------- start / change name ---------------- */
+function start(fromLoad = false) {
+  const n = $("name").value.trim();
+  if (!n || n.split(/\s+/).length < 2) { $("startStatus").innerHTML = '<span class="bad">Type your first and last name first.</span>'; $("name").focus(); return false; }
+  SEED = normName(n);
+  P = makeParams(); buildCode();
+  started = true;
+  $("name").readOnly = true;
+  $("startBtn").classList.add("hidden");
+  $("changeName").classList.remove("hidden");
+  setDl(true);
+  $("startStatus").innerHTML = `<span class="ok">✓ Started.</span> Your numbers are ready. Your student code is <span class="mono">${P.code}</span>.` + (fromLoad ? "" : " Work through the sections below, and download your work before you close this page.");
+  renderAll();
+  return true;
+}
+$("startBtn").addEventListener("click", () => start());
+$("name").addEventListener("keydown", e => { if (e.key === "Enter" && !started) start(); });
+$("changeName").addEventListener("click", () => {
+  const any = Object.keys(S.ans).length > 0;
+  if (any && !confirm("Changing your name gives you different numbers and clears every answer on this page. Download your work first if you want to keep it. Continue?")) return;
+  S.ans = {}; S.tries = {}; S.lastWrong = {}; started = false; dirty = false; P = null;
+  $("name").readOnly = false; $("startBtn").classList.remove("hidden"); $("changeName").classList.add("hidden");
+  setDl(false); $("startStatus").textContent = "";
+  renderAll(); $("name").focus();
+});
+
+/* ---------------- Excel export (a real .xlsx, built in the page) ---------------- */
+const xmlText = s => escHtml(String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""));
+const colName = n => { let s = ""; n++; while (n) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+function sheetXml(rows, widths) {
+  let x = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">';
+  if (widths) x += "<cols>" + widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("") + "</cols>";
+  x += "<sheetData>";
+  rows.forEach((row, r) => {
+    x += `<row r="${r + 1}">`;
+    row.forEach((cell, c) => {
+      if (cell === null || cell === undefined || cell === "") return;
+      let v = cell, st = "";
+      if (typeof cell === "object") { v = cell.v; st = cell.b ? ' s="1"' : (cell.w ? ' s="2"' : ""); }
+      const ref = colName(c) + (r + 1);
+      if (typeof v === "number" && isFinite(v)) x += `<c r="${ref}"${st}><v>${v}</v></c>`;
+      else x += `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${xmlText(v)}</t></is></c>`;
+    });
+    x += "</row>";
+  });
+  return x + "</sheetData></worksheet>";
+}
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = d => { let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = CRC[(c ^ d[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zip(files) {   // files: [{name, text}] -> Uint8Array (stored, no compression)
+  const parts = [], central = []; let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+    ch.setUint16(28, name.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+    ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + data.length;
+  }
+  const cdSize = central.reduce((a, p) => a + p.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  const all = [...parts, ...central, new Uint8Array(end.buffer)];
+  const out = new Uint8Array(all.reduce((a, p) => a + p.length, 0)); let p = 0;
+  for (const a of all) { out.set(a, p); p += a.length; }
+  return out;
+}
+const b64 = s => { const bytes = enc.encode(s); let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+const unb64 = s => new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0)));
+function answerText(q) {
+  const v = S.ans[q.id];
+  if (q.kind === "mc") return v === undefined ? "" : q.opts[+v];
+  if (q.kind === "sel") return v === undefined || v === "" ? "" : q.opts[+v];
+  if (q.kind === "je") return Array.isArray(v) ? v.filter(r => r.a || r.dr || r.cr).map(r => `${r.a || "(no account)"}: ${r.dr ? "Dr " + r.dr : ""}${r.cr ? "Cr " + r.cr : ""}`).join("; ") : "";
+  return v === undefined ? "" : String(v);
+}
+function buildXlsx() {
+  const B = v => ({ v, b: true }), Wr = v => ({ v, w: true });
+  const st = sectionStats();
+  const tot = Object.values(st).reduce((a, v) => [a[0] + v.right, a[1] + v.total, a[2] + v.tries], [0, 0, 0]);
+  const data = { tag: DATA_TAG, name: $("name").value.trim(), ans: S.ans, tries: S.tries, lastWrong: S.lastWrong,
+    fields: { dept: $("dept").value, univ: $("univ").value, course: $("course").value, instructor: $("instructor").value, duedate: $("duedate").value } };
+  const json = JSON.stringify(data);
+  const check = hashHex(SEED + "|" + json).slice(0, 12).toUpperCase();
+  const summary = [
+    [B(COURSE.title)], [],
+    [B("Student"), data.name || "(no name entered)"],
+    [B("Student code"), P.code],
+    [B("Department"), $("dept").value.trim()],
+    [B("University"), $("univ").value.trim()],
+    [B("Course"), $("course").value.trim()],
+    [B("Instructor"), $("instructor").value.trim()],
+    [B("Date"), $("duedate").value.trim()],
+    [B("Downloaded"), new Date().toLocaleString()],
+    [B("Check code"), check],
+    [], [B("Section"), B("Checked answers right"), B("Checked answers"), B("Written answers filled in"), B("Written answers"), B("Wrong tries")],
+    ...Object.entries(st).map(([s, v]) => [SECNAMES[s], v.right, v.total, v.written, v.wtotal, v.tries]),
+    [B("Total"), tot[0], tot[1], "", "", tot[2]],
+    [], ["Instructor: to re-check this file, open the lab page and click \"Load my saved work\". The page re-grades every answer from the student's name, ignoring any edits made to these sheets."],
+  ];
+  const answers = [[B("Section"), B("Question"), B("What it asks"), B("Student's answer"), B("Right?"), B("Wrong tries")]];
+  for (const q of Q) {
+    if (q.kind === "text" || q.kind === "sel") continue;
+    const ok = isRight(q);
+    answers.push([SECNAMES[q.sec[0]], q.n, q.label, answerText(q) || "(blank)", ok === null ? "blank" : ok ? "right" : "WRONG", S.tries[q.id] || 0]);
+  }
+  const written = [[B("Question"), B("What it asks"), B("Choice"), B("Student's written answer"), B("Words")]];
+  for (const q of Q) {
+    if (q.kind === "sel") written.push([q.n, q.label, answerText(q) || "(none)", Wr(S.ans[q.id + "w"] || "(blank)"), words(S.ans[q.id + "w"])]);
+    if (q.kind === "text") written.push([q.n, q.label, "", Wr(S.ans[q.id] || "(blank)"), words(S.ans[q.id])]);
+  }
+  const je = [[B("Entry"), B("Line"), B("Account"), B("Debit"), B("Credit"), B("Entry right?")]];
+  for (const q of Q.filter(q => q.kind === "je")) {
+    const rows = (S.ans[q.id] || []).filter(r => r && (r.a || r.dr || r.cr));
+    const ok = isRight(q);
+    if (!rows.length) je.push([q.label, "", "(blank)", "", "", "blank"]);
+    rows.forEach((r, i) => je.push([i === 0 ? q.label : "", i + 1, r.a || "(no account)", isNaN(parseNum(r.dr)) ? (r.dr || "") : parseNum(r.dr), isNaN(parseNum(r.cr)) ? (r.cr || "") : parseNum(r.cr), i === 0 ? (ok ? "right" : "WRONG") : ""]));
+  }
+  const enc64 = b64(json), chunks = [];
+  for (let i = 0; i < enc64.length; i += 30000) chunks.push([enc64.slice(i, i + 30000)]);
+  const dataSheet = [[DATA_TAG], ...chunks];
+  const names = ["Summary", "Answers", "Written answers", "Journal entries", "data"];
+  const sheets = [sheetXml(summary, [30, 34, 16, 26, 16, 12]), sheetXml(answers, [24, 9, 40, 60, 9, 11]), sheetXml(written, [9, 40, 40, 100, 8]),
+                  sheetXml(je, [34, 6, 32, 14, 14, 12]), sheetXml(dataSheet, [20])];
+  const files = [
+    { name: "[Content_Types].xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+        names.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + "</Types>" },
+    { name: "_rels/.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: "xl/workbook.xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+        names.map((n, i) => `<sheet name="${xmlText(n)}" sheetId="${i + 1}"${n === "data" ? ' state="hidden"' : ""} r:id="rId${i + 1}"/>`).join("") + "</sheets></workbook>" },
+    { name: "xl/_rels/workbook.xml.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        names.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("") +
+        `<Relationship Id="rId${names.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>` },
+    { name: "xl/styles.xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="11"/><name val="Arial"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>' },
+    ...sheets.map((x, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, text: x })),
+  ];
+  return zip(files);
+}
+function download() {
+  if (!started) return;
+  const bytes = buildXlsx();
+  const nm = $("name").value.trim().replace(/[^A-Za-z0-9 _-]/g, "").replace(/\s+/g, "_") || "student";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  a.download = `Stablecoin_Lab_${nm}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  dirty = false;
+  const st = sectionStats(); const tot = Object.values(st).reduce((x, v) => [x[0] + v.right, x[1] + v.total], [0, 0]);
+  $("dlNote").textContent = `Downloaded at ${new Date().toLocaleTimeString()}. ${tot[0]} of ${tot[1]} checked answers right so far.`;
+}
+const setDl = on => { $("download").disabled = $("dlTop").disabled = !on; document.querySelectorAll(".dlBtn").forEach(b => b.disabled = !on); };
+document.querySelectorAll(".dlBtn").forEach(b => b.addEventListener("click", download));
+document.querySelectorAll(".ldBtn").forEach(b => b.addEventListener("click", () => $("loadFile").click()));
+$("download").addEventListener("click", download);
+$("dlTop").addEventListener("click", download);
+
+/* ---------------- loading a saved file back in ---------------- */
+async function inflateRaw(bytes) {
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function readZip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error("not a zip");
+  const count = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const files = {};
+  for (let k = 0; k < count; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error("bad zip");
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), loff = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+    const dstart = loff + 30 + dv.getUint16(loff + 26, true) + dv.getUint16(loff + 28, true);
+    files[name] = { method, raw: u8.subarray(dstart, dstart + csize) };
+    p += 46 + nlen + xlen + clen;
+  }
+  return async name => { const f = files[name]; if (!f) return null; const b = f.method === 8 ? await inflateRaw(f.raw) : f.raw; return new TextDecoder().decode(b); };
+}
+async function readLabData(buf) {
+  const get = await readZip(buf);
+  const parse = s => new DOMParser().parseFromString(s, "application/xml");
+  const wb = parse(await get("xl/workbook.xml"));
+  const RNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const sh = [...wb.getElementsByTagName("sheet")].find(e => e.getAttribute("name") === "data");
+  if (!sh) throw new Error("no data sheet");
+  const rid = sh.getAttributeNS(RNS, "id") || sh.getAttribute("r:id");
+  const rels = parse(await get("xl/_rels/workbook.xml.rels"));
+  let target = [...rels.getElementsByTagName("Relationship")].find(e => e.getAttribute("Id") === rid).getAttribute("Target");
+  target = target.startsWith("/") ? target.slice(1) : "xl/" + target;
+  const ssText = await get("xl/sharedStrings.xml");
+  const shared = ssText ? [...parse(ssText).getElementsByTagName("si")].map(si => [...si.getElementsByTagName("t")].map(t => t.textContent).join("")) : [];
+  const ws = parse(await get(target));
+  const vals = [];
+  for (const c of ws.getElementsByTagName("c")) {
+    if (!/^A\d+$/.test(c.getAttribute("r") || "A1")) continue;
+    const t = c.getAttribute("t");
+    if (t === "s") vals.push(shared[+c.getElementsByTagName("v")[0].textContent]);
+    else if (t === "inlineStr") vals.push([...c.getElementsByTagName("t")].map(x => x.textContent).join(""));
+    else { const v = c.getElementsByTagName("v")[0]; vals.push(v ? v.textContent : ""); }
+  }
+  if (vals[0] !== DATA_TAG) throw new Error("not a lab file");
+  const data = JSON.parse(unb64(vals.slice(1).join("")));
+  if (data.tag !== DATA_TAG) throw new Error("not a lab file");
+  return data;
+}
+$("loadBtn").addEventListener("click", () => $("loadFile").click());
+$("loadFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const data = await readLabData(await f.arrayBuffer());
+    if (started && Object.keys(S.ans).length && !confirm(`Replace everything on this page with the work saved for "${data.name}"?`)) return;
+    started = false;
+    S.ans = data.ans || {}; S.tries = data.tries || {}; S.lastWrong = data.lastWrong || {};
+    $("name").readOnly = false; $("name").value = data.name || "";
+    for (const k of ["dept", "univ", "course", "instructor", "duedate"]) if (data.fields && data.fields[k] && !$(k).readOnly) $(k).value = data.fields[k];
+    if (!start(true)) return;
+    dirty = false;
+    const st = sectionStats(); const tot = Object.values(st).reduce((x, v) => [x[0] + v.right, x[1] + v.total], [0, 0]);
+    $("startStatus").innerHTML = `<span class="ok">✓ Loaded the work saved for ${escHtml(data.name)}.</span> Re-checked from the name: ${tot[0]} of ${tot[1]} checked answers right. Student code <span class="mono">${P.code}</span>. Pick up where you left off.`;
+  } catch (err) {
+    $("startStatus").innerHTML = '<span class="bad">That file couldn\'t be read.</span> Choose the Excel file this page downloaded. If it was opened and saved again in Excel or Numbers, try an earlier copy.';
+  }
+});
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------------- instructor answer key ---------------- */
+function keyRows() {
+  return Q.filter(q => CHECKED.includes(q)).map(q => {
+    let a;
+    if (q.kind === "num") a = (q.unit === "$" ? money(q.ans(P), q.dec) : fmt(q.ans(P), q.dec) + (q.unit ? " " + q.unit : ""));
+    else if (q.kind === "mc") a = q.opts[correctMC(q)];
+    else a = q.lines(P).map(l => `${l.a}: ${l.dr ? "Dr " + fmt(l.dr, 2) : "Cr " + fmt(l.cr, 2)}`).join("; ");
+    return `<tr><td>${q.n}</td><td>${escHtml(q.label)}</td><td>${escHtml(a)}</td></tr>`;
+  }).join("");
+}
+if (/[?&]instructor\b/.test(location.search)) $("instr").classList.remove("hidden");
+$("keyBtn").addEventListener("click", () => {
+  if (hashHex($("keyPass").value) !== COURSE.instructorKeyHash) { $("keyStatus").innerHTML = '<span class="bad">Wrong passcode.</span>'; return; }
+  if (!started) { $("keyStatus").innerHTML = '<span class="bad">Type the student\'s name at the top and click Start first.</span>'; return; }
+  $("keyStatus").innerHTML = `<span class="ok">Answer key for ${escHtml($("name").value)} (code ${P.code})</span>`;
+  $("keyOut").innerHTML = `<table class="t"><tr><th>#</th><th>Question</th><th>Answer</th></tr>${keyRows()}</table>`;
+});
+
+/* ---------------- title page ---------------- */
+function setupTitlePage() {
+  $("tpTitle").textContent = COURSE.title;
+  document.title = COURSE.title;
+  for (const [id, key] of [["dept", "department"], ["univ", "university"], ["course", "course"], ["instructor", "instructor"]]) {
+    if (COURSE[key]) { $(id).value = COURSE[key]; $(id).readOnly = true; }
+  }
+  $("duedate").value = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+}
+setupTitlePage(); renderAll();
+window.__lab = { Q, get P() { return P; }, S, isRight, buildXlsx, readLabData, keyRows, get CODE() { return CODE; } };   // used by tests
+</script>
+</body>
+</html>
