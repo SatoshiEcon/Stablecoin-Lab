@@ -112,7 +112,7 @@
     <p class="note" style="text-align:center;margin:10px 0 0">Type your name on the first line. The title block follows APA 7th edition and goes on the first page of the file you hand in.</p>
   </header>
 
-  <p class="sub">You are on the finance team at <strong>Maple Supply Co.</strong>, a U.S. manufacturer that buys steel from a supplier in Mexico and has offices in Mexico and Canada. Your CFO wants to know what stablecoins are, whether Maple should launch its own, whether to pay suppliers with one, what can go wrong, and how to put it all on the books. This lab walks you through each question, one section at a time.</p>
+  <p class="sub">You are on the finance team at <strong>Maple Supply Co.</strong>, a U.S. manufacturer that buys steel from a supplier in Mexico and has offices in Mexico and Canada. Your CFO wants to know what stablecoins are, whether Maple should launch its own, whether to pay suppliers with one, and what can go wrong. This lab walks you through each question, one section at a time.</p>
 
   <section>
     <h2>How this lab works</h2>
@@ -140,7 +140,7 @@
     <div id="startStatus" class="small"></div>
     <div id="progress" class="progress hidden" style="margin-top:10px"></div>
     <nav class="toc small" style="margin-top:8px">Jump to:
-      <a href="#s1">1. Know your stablecoins</a><a href="#s2">2. Design your own</a><a href="#s3">3. Pay with it</a><a href="#s4">4. Stress test</a><a href="#s5">5. Book it</a><a href="#s6">6. Your call</a>
+      <a href="#s1">1. Know your stablecoins</a><a href="#s2">2. Design your own</a><a href="#s3">3. Pay with it</a><a href="#s4">4. Stress test</a><a href="#s5">5. Your call</a>
     </nav>
   </section>
 
@@ -374,33 +374,10 @@
 
   <!-- ===================================================== SECTION 5 ===================================================== -->
   <section id="s5">
-    <h2><span class="step">Section 5</span>Book it</h2>
-    <div class="why">
-      <p><strong>Quick refresher:</strong> every journal entry has at least one <strong>debit</strong> and one <strong>credit</strong>, and total debits must equal total credits. Assets and expenses go <em>up</em> with a debit. Liabilities, revenue and gains go <em>up</em> with a credit.</p>
-      <p><strong>Where stablecoins fit today:</strong> FASB's crypto rule (ASU 2023-08, which requires crypto to be measured at fair value) covers only crypto assets that <em>don't</em> give the holder a right to underlying goods, services or other assets. A fiat-backed stablecoin gives the holder a right to redeem it for dollars, so most stablecoins fall outside that rule.</p>
-      <p><strong>What's changing:</strong> on August 18, 2026, FASB issued a proposed update to the cash flow standard (Topic 230). It doesn't change the definition of a cash equivalent. Instead, it adds examples showing when certain stablecoins <em>could</em> be classified as cash equivalents, which remains a company's accounting policy choice. The examples describe a stablecoin with (1) an on-demand contractual right to redeem for cash, (2) redemption directly with the issuer for a known amount of cash, and (3) issuer reserves of at least 1 to 1, kept separate in short-term, highly liquid assets. Being tradable on an exchange alone wouldn't be enough. The proposal also adds a yearly disclosure of the main types of cash equivalents a company holds. Comments are due November 19, 2026, no effective date has been set, and the final version could change.</p>
-      <p><strong>Lab conventions</strong> (simplifications for practice, not the only correct treatment):</p>
-      <ul>
-        <li>Record stablecoins in their own asset account, <strong>Stablecoin holdings (USDC)</strong>, separate from cash in the bank. Under current rules, how a company classifies stablecoins depends on its facts and its auditors.</li>
-        <li>Maple records steel purchases using a <strong>periodic inventory system</strong> and records early-payment discounts in a <strong>Purchase discounts</strong> account. Under a perpetual system, the discount would reduce Inventory instead.</li>
-        <li>Round every amount to the cent.</li>
-      </ul>
-      <p class="note">Sources: <a href="https://storage.fasb.org/Proposed%20ASU%20Statement%20of%20Cash%20Flows%20%28Topic%20230%29.pdf" target="_blank" rel="noopener">FASB proposed ASU, Statement of Cash Flows (Topic 230), Aug. 18, 2026</a>; <a href="https://kpmg.com/us/en/frv/reference-library/2026/fasb-issues-proposed-asu-cash-equivalents.html" target="_blank" rel="noopener">KPMG summary</a>; FASB ASU 2023-08 (Subtopic 350-60).</p>
-    </div>
-    <div class="tech"><strong>Under the hood: the blockchain as an audit trail.</strong> Every stablecoin payment has a transaction hash and a timestamp that anyone can check on a block explorer. If the treasury team saves that hash with each journal entry, an auditor can confirm the payment directly instead of waiting for a bank confirmation. Matching the books to the blockchain (reconciliation) can then be done continuously instead of at month end.</div>
-    <div class="ex"><b class="t">Example: how to fill in an entry</b>Maple buys $10,000 of office supplies and pays in USDC.<br>
-      Line 1: <strong>Supplies expense</strong>, debit 10,000.00. Line 2: <strong>Stablecoin holdings (USDC)</strong>, credit 10,000.00.<br>
-      Pick each account from the list and type the amount in the Debit <em>or</em> Credit column, not both. The lines can go in any order.</div>
-    <div class="qs" data-sec="5"></div>
-    <div class="row savebar"><button class="dlBtn" disabled>Download my work</button><button class="ldBtn">Load my saved work</button><span class="note">Save before you stop. To pick up later, load the file you downloaded.</span></div>
-  </section>
-
-  <!-- ===================================================== SECTION 6 ===================================================== -->
-  <section id="s6">
-    <h2><span class="step">Section 6</span>Your call</h2>
+    <h2><span class="step">Section 5</span>Your call</h2>
     <div class="why">This is the question your DAR discussion and your capstone keep coming back to. Use what you worked out in this lab: real numbers from your sections, at least one mechanism (how a peg holds, or how it can fail), and the rules. There's no right side. Your instructor grades how well you support your answer.</div>
     <div class="locked qlock">Type your name and click Start to see your questions.</div>
-    <div class="qs" data-sec="6"></div>
+    <div class="qs" data-sec="5"></div>
   </section>
 
   <section>
@@ -415,17 +392,6 @@
     <p class="small">Enter the instructor passcode. Then type a student's name at the top and click Start to see that student's answer key. To check a submission, click <strong>Load my saved work</strong> and choose the student's file: the page re-checks every answer from the student's name, ignoring anything typed into the Excel file afterward.</p>
     <div class="row"><input class="num" id="keyPass" type="password" style="width:240px" aria-label="Instructor passcode"><button id="keyBtn">Show answer key</button><span id="keyStatus" class="small"></span></div>
     <div id="keyOut" class="scroll"></div>
-    <h3>Suggested rubric (70 points)</h3>
-    <div class="scroll"><table class="t">
-      <tr><th>Part</th><th>Points</th><th>What earns them</th></tr>
-      <tr><td>1. Know your stablecoins</td><td>5</td><td>Checked answers right</td></tr>
-      <tr><td>2. Design your own</td><td>15</td><td>Checked answers right (10); design choices and the written launch answer are supported with numbers and a rule (5)</td></tr>
-      <tr><td>3. Pay with it</td><td>12</td><td>Checked answers right (8); the supplier answer uses the numbers and names a real cost or risk the model leaves out (4)</td></tr>
-      <tr><td>4. Stress test</td><td>13</td><td>Checked answers right (10); the sell-or-wait answer explains the trade-off (3)</td></tr>
-      <tr><td>5. Book it</td><td>10</td><td>Entries and questions right</td></tr>
-      <tr><td>6. Your call</td><td>15</td><td>Clear position; uses the student's own numbers; explains a peg mechanism and how it fails; addresses rules or accounting</td></tr>
-    </table></div>
-    <p class="note">Wrong tries count only different wrong answers, and students can retry until they're right. Use them as a signal of where students struggled, not as a penalty. The answer formulas live in the page's code, so this lab is a learning tool, not a tamper-proof exam; the written answers carry the independent-work weight.</p>
   </section>
 
   <footer class="note">
@@ -439,7 +405,7 @@
 "use strict";
 /* ============ COURSE SETTINGS: fill these in once; every student sees them. Leave "" to let students type it. ============ */
 const COURSE = {
-  title:      "Stablecoin Lab: Know It, Design It, Use It, Stress It, Book It",
+  title:      "Stablecoin Lab: Know It, Design It, Use It, Stress It",
   department: "Hutton & Plaster School of Business",
   university: "University of the Cumberlands",
   course:     "BLCN 533: Finance and Blockchain",
@@ -588,7 +554,7 @@ function makeParams() {
 /* ---------------- the questions ---------------- */
 const ACCOUNTS = ["Cash – bank account", "Stablecoin holdings (USDC)", "Crypto assets – network token", "Accounts payable", "Accounts receivable",
   "Bank fees expense", "Purchase discounts", "Salaries expense", "Payroll tax withholding payable", "Realized loss on stablecoins", "Interest income", "Revenue"];
-const SECNAMES = { 1: "1. Know your stablecoins", 2: "2. Design your own", 3: "3. Pay with it", 4: "4. Stress test", 5: "5. Book it", 6: "6. Your call" };
+const SECNAMES = { 1: "1. Know your stablecoins", 2: "2. Design your own", 3: "3. Pay with it", 4: "4. Stress test", 5: "5. Your call" };
 
 // kinds: num (number, checked), mc (multiple choice, checked), je (journal entry, checked), sel (design choice + why, not checked), text (written, not checked)
 const Q = [];
@@ -799,36 +765,10 @@ add({ id: "4.16", sec: "4d", kind: "mc", label: "What later designs changed",
          "They removed all collateral to be more efficient", "They stopped using smart contracts", "Nothing changed"], correct: 0,
   hint: "Re-read Type 5 in Section 1." });
 
-/* Section 5 */
-add({ id: "5.1", sec: "5", kind: "je", label: "JE1: buy USDC with a wire",
-  prompt: p => `<strong>Entry 1.</strong> Maple wires <strong>${money(p.B5)}</strong> from its bank account to the issuer and receives ${fmt(p.B5)} USDC. The bank charges a <strong>${money(p.F5)}</strong> wire fee, also taken from the bank account.`,
-  lines: p => [{ a: "Stablecoin holdings (USDC)", dr: p.B5 }, { a: "Bank fees expense", dr: p.F5 }, { a: "Cash – bank account", cr: p.B5 + p.F5 }],
-  hint: "Two things go up (an asset and an expense) and one asset goes down by the total that left the bank." });
-add({ id: "5.2", sec: "5", kind: "je", label: "JE2: pay supplier with discount",
-  prompt: p => `<strong>Entry 2.</strong> Maple pays Aceros's <strong>${money(p.A)}</strong> invoice (already recorded in Accounts payable) in USDC within 24 hours and takes the <strong>${fmt(p.d, 1)}%</strong> early-payment discount.`,
-  lines: p => [{ a: "Accounts payable", dr: p.A }, { a: "Stablecoin holdings (USDC)", cr: r2(p.A * (1 - p.d / 100)) }, { a: "Purchase discounts", cr: r2(p.A * p.d / 100) }],
-  hint: "The whole payable goes away (debit). Maple only sends the invoice minus the discount in USDC (credit), and the discount is recorded on its own line (credit)." });
-add({ id: "5.3", sec: "5", kind: "je", label: "JE3: smart-contract payroll",
-  prompt: p => `<strong>Entry 3 (hypothetical).</strong> U.S. tax authorities don't currently accept payroll taxes in stablecoins, so this entry imagines how programmable payroll <em>could</em> work. The smart contract pays the engineer's <strong>${money(p.G)}</strong> gross pay in USDC: net pay to the engineer and ${p.wt}% withholding straight to the tax authority, in the same transaction. Because the withholding is sent at the same moment, no withholding liability is left on Maple's books. (Today, a company records a withholding liability and pays it off later.)`,
-  lines: p => [{ a: "Salaries expense", dr: p.G }, { a: "Stablecoin holdings (USDC)", cr: p.G }],
-  hint: "The full gross pay is the expense. All of it left Maple's USDC in one transaction, so there's nothing left owing." });
-add({ id: "5.5", sec: "5", kind: "je", label: "JE5: sell during a depeg",
-  prompt: p => `<strong>Entry 5.</strong> During a depeg, Maple sells <strong>${fmt(p.Hs)}</strong> USDC on an exchange at <strong>$${fmt(p.p5, 3)}</strong> each, recorded at $1 each on its books. The cash goes to its bank account.`,
-  lines: p => [{ a: "Cash – bank account", dr: r2(p.Hs * p.p5) }, { a: "Realized loss on stablecoins", dr: r2(p.Hs * (1 - p.p5)) }, { a: "Stablecoin holdings (USDC)", cr: p.Hs }],
-  hint: "The USDC leaves the books at $1 each (credit). Cash comes in at the sale price (debit). The difference is a loss (debit)." });
-add({ id: "5.6", sec: "5", kind: "mc", label: "Why stablecoins sit outside ASU 2023-08",
-  prompt: () => "Why do most fiat-backed stablecoins fall outside FASB's fair-value crypto rule (ASU 2023-08)?",
-  opts: ["They give the holder a right to redeem them for dollars, and the rule covers only crypto without such rights", "They aren't recorded on a blockchain", "They're always counted as cash", "FASB hasn't heard of them"], correct: 0,
-  hint: "Re-read the second paragraph in the blue box at the top of Section 5." });
-add({ id: "5.7", sec: "5", kind: "mc", label: "Which could be a cash equivalent (proposal)",
-  prompt: () => "Under FASB's August 2026 proposal, which coin is most likely to count as a cash equivalent?",
-  opts: ["A coin you can redeem on demand with the issuer at $1, backed 1-to-1 by separate short-term, liquid reserves",
-         "A coin you can only sell on crypto exchanges", "DAI, which has no issuer you can redeem with", "An algorithmic coin with no reserves"], correct: 0,
-  hint: "Check each option against the three tests in the blue box." });
 
-/* Section 6 */
-add({ id: "6.1", sec: "6", kind: "text", label: "Written: CFO recommendation",
-  prompt: () => "Maple's CFO asks: <em>Should we move our cross-border supplier payments from wires to a stablecoin rail now, before the GENIUS Act takes effect on January 18, 2027, or wait?</em> Take a clear position in your first sentence. Support it with (1) at least two numbers from this lab, (2) the mechanism of the stablecoin type you'd use, including how it could fail, and (3) how the rules or the accounting affect your answer." });
+/* Section 5 */
+add({ id: "5.1", sec: "5", kind: "text", label: "Written: CFO recommendation",
+  prompt: () => "Maple's CFO asks: <em>Should we move our cross-border supplier payments from wires to a stablecoin rail now, before the GENIUS Act takes effect on January 18, 2027, or wait?</em> Take a clear position in your first sentence. Support it with (1) at least two numbers from this lab, (2) the mechanism of the stablecoin type you'd use, including how it could fail, and (3) how the rules affect your answer." });
 
 const QBYID = Object.fromEntries(Q.map(q => [q.id, q]));
 { const cnt = {}; for (const q of Q) { const k = q.sec[0]; cnt[k] = (cnt[k] || 0) + 1; q.n = k + "." + cnt[k]; } }   // numbers shown to students run 1.1, 1.2, ... with no gaps
@@ -1032,7 +972,7 @@ function refreshQ(q, typing = false) {
 function refreshAll() { if (started) Q.forEach(q => refreshQ(q)); refreshProgress(); }
 function sectionStats() {
   const out = {};
-  for (const s of ["1", "2", "3", "4", "5", "6"]) {
+  for (const s of ["1", "2", "3", "4", "5"]) {
     const qs = Q.filter(q => q.sec[0] === s);
     const ch = qs.filter(q => CHECKED.includes(q));
     const wr = qs.filter(q => q.kind === "text" || q.kind === "sel");
@@ -1181,9 +1121,9 @@ function buildXlsx() {
   const enc64 = b64(json), chunks = [];
   for (let i = 0; i < enc64.length; i += 30000) chunks.push([enc64.slice(i, i + 30000)]);
   const dataSheet = [[DATA_TAG], ...chunks];
-  const names = ["Summary", "Answers", "Written answers", "Journal entries", "data"];
+  const names = ["Summary", "Answers", "Written answers", "data"];
   const sheets = [sheetXml(summary, [30, 34, 16, 26, 16, 12]), sheetXml(answers, [24, 9, 40, 60, 9, 11]), sheetXml(written, [9, 40, 40, 100, 8]),
-                  sheetXml(je, [34, 6, 32, 14, 14, 12]), sheetXml(dataSheet, [20])];
+                  sheetXml(dataSheet, [20])];
   const files = [
     { name: "[Content_Types].xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
         names.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + "</Types>" },
